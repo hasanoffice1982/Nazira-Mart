@@ -1,0 +1,2 @@
+{% if popular_products %}<section class="container section" id="popular"><div class="section-top"><div><div class="section-label">{{ site.popular_label }}</div><h2 class="section-title">{{ site.popular_title }}<span style="color:#44988b">.</span></h2>{% if site.popular_subtitle %}<p class="section-sub">{{ site.popular_subtitle }}</p>{% endif %}</div></div>
+<div class="product-grid popular-grid" style="--cols:{{ popular_cols }}">{% for p in popular_products %}{% include "components/product_card.html" %}{% endfor %}</div></section>{% endif %}

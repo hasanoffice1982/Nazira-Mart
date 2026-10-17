@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.number }} — NarizMart{% endblock %}
+{% block content %}
+<section class="container section"><p class="crumbs"><a href="{% url 'orders:list' %}">← All orders</a></p>
+<div class="checkout-grid"><div class="auth-card"><h2>Order {{ order.number }}</h2><span class="status status-{{ order.status }}">{{ order.get_status_display }}</span> <span class="muted">· {{ order.get_payment_status_display }}</span>
+{% include "orders/_timeline.html" %}
+{% if order.tracking_number %}<p class="muted">Courier tracking: <b>{{ order.tracking_number }}</b></p>{% endif %}
+{% if order.status == 'pending' or order.status == 'confirmed' %}<form method="post" action="{% url 'orders:cancel' order.number %}" data-confirm="Cancel this order?">{% csrf_token %}<button class="btn btn-light" type="submit">Cancel order</button></form>{% endif %}</div>
+<aside class="auth-card"><h3>Summary</h3>{% include "orders/_summary.html" %}<h3>Delivering to</h3><p>{{ order.full_name }}<br>{{ order.address }}, {{ order.city }}<br>{{ order.phone }}</p></aside></div></section>
+{% endblock %}

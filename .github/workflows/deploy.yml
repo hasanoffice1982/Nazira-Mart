@@ -1,0 +1,103 @@
+name: Deploy
+
+# Runs after CI succeeds on main (or by hand from the Actions tab).
+# Off by default: nothing deploys until you set the REPOSITORY variable DEPLOY_ENABLED=true
+# (Settings -> Secrets and variables -> Actions -> Variables), so you can push before the server is ready.
+# Configure the "production" environment in GitHub: Settings -> Environments (add required reviewers for an approval step).
+#   Secrets:   SSH_HOST  SSH_USER  SSH_PRIVATE_KEY  SSH_KNOWN_HOSTS
+#   Variables: APP_DOMAIN (e.g. narizmart.com)   SSH_PORT (optional, default 22)
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or commit to deploy"
+        required: true
+        default: main
+
+# never run two deploys at once, and never cancel one halfway
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to production
+    # only after a green CI run that came from a push to main (not a pull request)
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' && (
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://${{ vars.APP_DOMAIN }}
+    env:
+      SSH_PORT: ${{ vars.SSH_PORT || '22' }}
+      REMOTE: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+      BASE: /srv/narizmart
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref }}
+          fetch-depth: 0   # full history and tags, so `git describe` can name the release
+
+      - name: Release id and label
+        id: rel
+        run: |
+          # v1.2.0 exactly on a tag, v1.2.0-3-g6476069 three commits after it, or just the short commit id before any tag
+          label="$(git describe --tags --always --match 'v[0-9]*' | tr -c 'A-Za-z0-9._+\n-' '-')"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "label=$label" >> "$GITHUB_OUTPUT"
+          echo "Deploying $label ($(git rev-parse --short HEAD))"
+
+      - name: Package release
+        run: git archive --format=tar.gz --output=release.tar.gz HEAD
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts   # pinned host key: no trust-on-first-use
+          printf 'Host target\n  HostName %s\n  User %s\n  Port %s\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' \
+            "${{ secrets.SSH_HOST }}" "${{ secrets.SSH_USER }}" "$SSH_PORT" > ~/.ssh/config
+
+      - name: Upload release
+        run: scp release.tar.gz "target:$BASE/incoming/${{ steps.rel.outputs.sha }}.tar.gz"
+
+      - name: Deploy (migrate, switch, health check, auto-rollback)
+        run: |
+          ssh target "set -euo pipefail
+            SHA='${{ steps.rel.outputs.sha }}'
+            cd '$BASE'
+            rm -rf \"releases/\$SHA\" && mkdir -p \"releases/\$SHA\"
+            tar -xzf \"incoming/\$SHA.tar.gz\" -C \"releases/\$SHA\"
+            rm -f \"incoming/\$SHA.tar.gz\"
+            bash \"releases/\$SHA/deploy/deploy.sh\" \"\$SHA\" '${{ steps.rel.outputs.label }}'"
+
+      - name: Smoke test the public site
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 10 "https://${{ vars.APP_DOMAIN }}/healthz"; then echo; exit 0; fi
+            sleep 5
+          done
+          echo "::error::public health check failed"; exit 1
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "### Deployed \`${{ steps.rel.outputs.label }}\` (\`${{ steps.rel.outputs.sha }}\`)"
+            echo "https://${{ vars.APP_DOMAIN }}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,17 @@
+Thank you for your order!
+
+Order {{ order.number }} — pay {{ currency }}{{ order.total|floatformat:"-2g" }} on delivery.
+{% for i in order.items.all %}
+ - {{ i.name }}{% if i.variant_label %} ({{ i.variant_label }}){% endif %} x {{ i.quantity }}  {{ currency }}{{ i.line_total|floatformat:"-2g" }}{% endfor %}
+{% if order.discount %}Discount{% if order.promotion_label %} ({{ order.promotion_label }}){% endif %}: -{{ currency }}{{ order.discount|floatformat:"-2g" }}
+Delivery: {% else %}Delivery: {% endif %}{{ currency }}{{ order.delivery_charge|floatformat:"-2g" }}
+Total: {{ currency }}{{ order.total|floatformat:"-2g" }}
+
+Deliver to: {{ order.full_name }}, {{ order.address }}, {{ order.city }} ({{ order.phone }})
+
+Track your order: {{ order_url }}
+{% if set_password_url %}
+We created an account for you with this email address. Choose a password (link valid for 24 hours):
+{{ set_password_url }}
+{% endif %}
+— {{ brand }}

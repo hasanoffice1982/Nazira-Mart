@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Order placed — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><div class="empty-big center">🎉</div><h1 class="center">Thank you, order placed!</h1><p class="muted center">Order <b>{{ order.number }}</b> · pay {{ currency }}{{ order.total|floatformat:"-2g" }} on delivery.</p>
+{% include "orders/_summary.html" %}<p><a class="btn btn-dark btn-full" href="{{ order.get_absolute_url }}">Track this order</a></p><p class="center"><a href="{% url 'catalog:shop' %}">Continue shopping</a></p></div></section>
+{% endblock %}

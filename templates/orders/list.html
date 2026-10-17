@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}My orders — NarizMart{% endblock %}
+{% block content %}
+<section class="container section"><div class="section-top"><div><div class="section-label">PURCHASE HISTORY</div><h2 class="section-title">My orders</h2></div></div>
+{% for o in orders %}<a class="order-row" href="{{ o.get_absolute_url }}"><div><b>{{ o.number }}</b><small>{{ o.created_at|date:"d M Y" }} · {{ o.items.all|length }} item{{ o.items.all|length|pluralize }}</small></div><span class="status status-{{ o.status }}">{{ o.get_status_display }}</span><b>{{ currency }}{{ o.total|floatformat:"-2g" }}</b></a>
+{% empty %}<div class="empty">No orders yet.<br><a class="filter" style="margin-top:15px;display:inline-block" href="{% url 'catalog:shop' %}">Start shopping</a></div>{% endfor %}
+{% if is_paginated %}<nav class="pager">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Newer</a>{% endif %}<span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Older →</a>{% endif %}</nav>{% endif %}</section>
+{% endblock %}

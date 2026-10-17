@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Email verification — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card center">{% if ok %}<div class="empty-big">✅</div><h1>Email verified</h1><p class="muted">Thanks! Your account is ready for checkout.</p><a class="btn btn-dark" href="{% url 'catalog:shop' %}">Start shopping</a>
+{% else %}<div class="empty-big">⏳</div><h1>Link invalid or expired</h1><p class="muted">Sign in and request a new verification email from your account page.</p><a class="btn btn-dark" href="{% url 'accounts:account' %}">Go to my account</a>{% endif %}</div></section>
+{% endblock %}

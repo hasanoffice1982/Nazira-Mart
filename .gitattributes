@@ -1,0 +1,8 @@
+# Left out of "git archive" / GitHub zip downloads
+tests/ export-ignore
+sample_data/ export-ignore
+deploy/ export-ignore
+.github/ export-ignore
+*.md export-ignore
+pytest.ini export-ignore
+requirements-dev.txt export-ignore

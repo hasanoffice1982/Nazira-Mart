@@ -1,0 +1,2 @@
+{% for e in form.non_field_errors %}<div class="flash flash-error">{{ e }}</div>{% endfor %}
+{% for field in form %}{% include "components/field.html" %}{% endfor %}

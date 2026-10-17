@@ -1,0 +1,11 @@
+name,slug,sku,category,description,price,old_price,badge,stock,is_active,color,color_hex,size,variant_sku,variant_price,variant_stock,images,color_images
+Classic Cotton T-Shirt,classic-cotton-tshirt,BM-1001,Fashion,Soft everyday tee.,850,1050,NEW DROP,,yes,Black,#1c3129,M,,,25,,
+Classic Cotton T-Shirt,classic-cotton-tshirt,,,,,,,,,Black,#1c3129,L,,,18,,
+Classic Cotton T-Shirt,classic-cotton-tshirt,,,,,,,,,White,#f2f2f2,M,,,30,,
+Classic Cotton T-Shirt,classic-cotton-tshirt,,,,,,,,,White,#f2f2f2,XL,TSHIRT-WHT-XL,950,12,,
+Everyday Running Shoes,everyday-running-shoes,BM-1002,Fashion,Light and breathable.,3200,3900,HOT PICK,,yes,,,41,,,10,,
+Everyday Running Shoes,everyday-running-shoes,,,,,,,,,,,42,,,14,,
+Everyday Running Shoes,everyday-running-shoes,,,,,,,,,,,43,,,8,,
+Ceramic Coffee Mug,ceramic-coffee-mug,BM-1003,Home,350 ml glazed mug.,450,,,,yes,Teal,#3b9189,,,,40,,
+Ceramic Coffee Mug,ceramic-coffee-mug,,,,,,,,,Sand,#d8c9a6,,,,35,,
+Bamboo Desk Organizer,bamboo-desk-organizer,BM-1004,Home,Keeps your desk tidy.,1290,1590,,60,yes,,,,,,,,

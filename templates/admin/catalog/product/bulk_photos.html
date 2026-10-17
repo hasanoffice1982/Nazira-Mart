@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load images %}
+{% block content %}
+<div class="import-page">
+<div class="card"><div class="card-body">
+<h3>Upload photos for {{ product.name }}</h3>
+<p>Select as many photos as you like (up to {{ max_files }} per upload). Photos with <b>no color</b> are shown for every color; photos tagged with a <b>color</b> appear when a customer picks that color, followed by the shared ones. Upload shared photos first, then repeat for each color.</p>
+<form method="post" enctype="multipart/form-data" class="import-form">{% csrf_token %}
+{% for err in form.non_field_errors %}<div class="alert alert-danger">{{ err }}</div>{% endfor %}
+{% for field in form %}<p><label for="{{ field.id_for_label }}"><b>{{ field.label }}</b></label><br>{{ field }}
+{% if field.help_text %}<br><span class="muted">{{ field.help_text }}</span>{% endif %}
+{% for e in field.errors %}<br><span class="text-danger">{{ e }}</span>{% endfor %}</p>{% endfor %}
+<button class="btn btn-primary" type="submit">Upload photos</button>
+<a class="btn btn-secondary" href="{% url 'admin:catalog_product_change' product.pk %}">Cancel</a></form></div></div>
+{% if existing %}<div class="card"><div class="card-body"><h4>Current gallery ({{ existing|length }})</h4>
+<div class="photo-grid">{% for img in existing %}<figure><img src="{{ img.image|rendition:320 }}" alt=""><figcaption>{% if img.color %}{{ img.color.name }}{% else %}Shared{% endif %} · #{{ img.position }}</figcaption></figure>{% endfor %}</div>
+<p class="muted">Reorder, retag or delete photos in the <b>Product images</b> tab of the product page.</p></div></div>{% endif %}
+</div>
+{% endblock %}

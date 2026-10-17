@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Create account — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><h1>Create your account</h1><p class="muted">Your bag will be saved and orders tracked.</p>
+<form method="post" novalidate>{% csrf_token %}
+{% include "components/form_fields.html" %}
+<button class="btn btn-dark btn-full" type="submit">Create account</button></form>
+<p class="muted center">Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p></div></section>
+{% endblock %}

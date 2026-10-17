@@ -1,0 +1,10 @@
+[Unit]
+Description=NarizMart: delete expired checkout and sign-in codes
+
+[Service]
+Type=oneshot
+User=narizmart
+WorkingDirectory=/srv/narizmart/current
+EnvironmentFile=/srv/narizmart/shared/.env
+Environment=DJANGO_SETTINGS_MODULE=config.settings.production
+ExecStart=/srv/narizmart/current/.venv/bin/python manage.py purge_checkout_otps

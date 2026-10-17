@@ -1,0 +1,41 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff4f9a">
+<title>{% block title %}NarizMart — Pretty finds for ladies &amp; kids.{% endblock %}</title>
+<meta name="description" content="{% block meta_description %}NarizMart - fashion, beauty, toys and kids’ favourites. Pretty finds for ladies and little ones in Bangladesh.{% endblock %}">
+{% if site.google_site_verification %}<meta name="google-site-verification" content="{{ site.google_site_verification }}">{% endif %}{% if site.meta_domain_verification %}<meta name="facebook-domain-verification" content="{{ site.meta_domain_verification }}">{% endif %}
+<link rel="manifest" href="{% url 'core:manifest' %}">
+<link rel="icon" href="{% static 'pwa/icon-192.png' %}">
+<link rel="apple-touch-icon" href="{% static 'pwa/apple-touch-icon.png' %}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"includeIndicatorStyles":false}'>
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}">
+<link rel="stylesheet" href="{% static 'css/narizmart.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/swiper/swiper-bundle.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<link rel="stylesheet" href="{% static 'css/theme3d.css' %}">
+<script src="{% static 'js/htmx.min.js' %}" defer></script>
+<script src="{% static 'vendor/swiper/swiper-bundle.min.js' %}" defer></script>
+<script src="{% static 'js/narizmart-art.js' %}" defer></script>
+<script src="{% static 'js/app.js' %}" defer></script>
+<script src="{% static 'js/fx3d.js' %}" defer></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-boost="false">
+{% include "components/announcement.html" %}
+{% include "components/header.html" %}
+{% include "components/nav.html" %}
+{% if messages %}<div class="container flash-wrap">{% for m in messages %}<div class="flash flash-{{ m.tags }}">{{ m }}</div>{% endfor %}</div>{% endif %}
+<main id="top">{% block content %}{% endblock %}</main>
+{% include "components/footer.html" %}
+{% include "components/mobilebar.html" %}
+{% include "components/drawers.html" %}
+<div id="toast" class="toast" role="status"></div>
+{% if site.meta_pixel_id or site.google_tag_id %}<div id="bm-tracking" hidden data-meta="{{ site.meta_pixel_id }}" data-google="{{ site.google_tag_id }}" data-events="{% if site.track_shopping_events %}1{% else %}0{% endif %}"></div>
+{% if track_data and site.track_shopping_events %}{{ track_data|json_script:"bm-track-data" }}{% endif %}
+<script src="{% static 'js/tracking.js' %}" defer></script>{% endif %}
+</body>
+</html>

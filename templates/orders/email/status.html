@@ -1,0 +1,14 @@
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#17272b">
+<h2 style="margin:0 0 6px">{% if status == "confirmed" %}Order confirmed{% elif status == "processing" %}We're packing your order{% elif status == "shipped" %}Your order is on its way{% elif status == "delivered" %}Delivered — thank you!{% else %}Order cancelled{% endif %}</h2>
+<p style="margin:0 0 16px;color:#718180">Order <b>{{ order.number }}</b></p>
+<p style="font-size:15px;line-height:1.6">Hi{% if order.user.first_name %} {{ order.user.first_name }}{% endif %},
+{% if status == "confirmed" %}good news — we've confirmed your order. We'll start packing it shortly.
+{% elif status == "processing" %}your order is being packed right now.
+{% elif status == "shipped" %}your order is out for delivery.{% if order.tracking_number %}<br>Tracking number: <b>{{ order.tracking_number }}</b>{% endif %}<br>Please keep your phone on and pay the courier <b>{{ currency }}{{ order.total|floatformat:"-2g" }}</b> in cash on arrival.
+{% elif status == "delivered" %}your order has been delivered. We've recorded your cash payment of <b>{{ currency }}{{ order.total|floatformat:"-2g" }}</b>. Thank you for shopping with {{ brand }}! If anything isn't right, <a href="{{ contact_url }}" style="color:#3b9189">contact us</a>.
+{% else %}{% if by_customer %}as you asked, we've cancelled your order.{% else %}we're sorry — we had to cancel your order. <a href="{{ contact_url }}" style="color:#3b9189">Contact us</a> if you have questions.{% endif %} You haven't been charged anything.
+{% endif %}</p>
+<table style="width:100%;border-collapse:collapse;font-size:14px">{% for i in order.items.all %}<tr><td style="padding:8px 0;border-bottom:1px solid #e9efec">{{ i.name }}{% if i.variant_label %} ({{ i.variant_label }}){% endif %} × {{ i.quantity }}</td><td style="padding:8px 0;border-bottom:1px solid #e9efec;text-align:right">{{ currency }}{{ i.line_total|floatformat:"-2g" }}</td></tr>{% endfor %}
+{% if order.discount %}<tr><td style="padding:8px 0;color:#2f8a76">Discount{% if order.promotion_label %} ({{ order.promotion_label }}){% endif %}</td><td style="text-align:right;color:#2f8a76">−{{ currency }}{{ order.discount|floatformat:"-2g" }}</td></tr>{% endif %}<tr><td style="padding:8px 0">Delivery</td><td style="text-align:right">{{ currency }}{{ order.delivery_charge|floatformat:"-2g" }}</td></tr><tr><td style="padding:8px 0;font-weight:bold">Total</td><td style="text-align:right;font-weight:bold">{{ currency }}{{ order.total|floatformat:"-2g" }}</td></tr></table>
+<p style="font-size:14px">Deliver to: {{ order.full_name }}, {{ order.address }}, {{ order.city }} · {{ order.phone }}</p>
+<p><a href="{{ order_url }}" style="display:inline-block;background:#101e2d;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:bold">Track your order</a></p></div>

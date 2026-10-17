@@ -1,0 +1,23 @@
+Hi{% if order.user.first_name %} {{ order.user.first_name }}{% endif %},
+
+{% if status == "confirmed" %}Good news — we've confirmed your order {{ order.number }}. We'll start packing it shortly.
+{% elif status == "processing" %}Your order {{ order.number }} is being packed right now.
+{% elif status == "shipped" %}Your order {{ order.number }} is out for delivery.{% if order.tracking_number %}
+Tracking number: {{ order.tracking_number }}{% endif %}
+Please keep your phone on. Pay the courier {{ currency }}{{ order.total|floatformat:"-2g" }} in cash when it arrives (cash on delivery).
+{% elif status == "delivered" %}Your order {{ order.number }} has been delivered. We've recorded your cash payment of {{ currency }}{{ order.total|floatformat:"-2g" }}. Thank you for shopping with {{ brand }}!
+If anything isn't right, reply or contact us: {{ contact_url }}
+{% elif status == "cancelled" %}{% if by_customer %}As you asked, we've cancelled your order {{ order.number }}.{% else %}We're sorry — we had to cancel your order {{ order.number }}.{% endif %} You haven't been charged anything.{% if not by_customer %}
+If you have questions, contact us: {{ contact_url }}{% endif %}
+{% endif %}
+Order summary
+{% for i in order.items.all %}- {{ i.name }}{% if i.variant_label %} ({{ i.variant_label }}){% endif %} x {{ i.quantity }}   {{ currency }}{{ i.line_total|floatformat:"-2g" }}
+{% endfor %}{% if order.discount %}Discount{% if order.promotion_label %} ({{ order.promotion_label }}){% endif %}: -{{ currency }}{{ order.discount|floatformat:"-2g" }}
+Delivery: {% else %}Delivery: {% endif %}{{ currency }}{{ order.delivery_charge|floatformat:"-2g" }}
+Total: {{ currency }}{{ order.total|floatformat:"-2g" }}
+
+Deliver to: {{ order.full_name }}, {{ order.address }}, {{ order.city }} ({{ order.phone }})
+
+Track your order: {{ order_url }}
+
+— {{ brand }}

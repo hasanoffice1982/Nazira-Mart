@@ -1,0 +1,1 @@
+{% with liked=liked|default:False %}<button type="button" id="wish-{{ product.pk }}" class="wish {% if liked or product.pk in wishlist_ids %}liked{% endif %}" hx-post="{% url 'wishlist:toggle' product.pk %}" hx-target="this" hx-swap="outerHTML" aria-label="Toggle wishlist"><span data-icon="heart" class="tinyicon"></span></button>{% endwith %}

@@ -1,0 +1,18 @@
+name,slug,sku,category,description,price,old_price,badge,stock,is_active,color,color_hex,size,variant_sku,variant_price,variant_stock,images,color_images
+Studio Wireless Headphones,studio-wireless-headphones,BM-1001,Tech,"<p>Over-ear wireless headphones with deep bass, soft cushions and a full-day battery.</p>",2490,3200,BESTSELLER,40,yes,,,,,,,studio-wireless-headphones-1.webp|studio-wireless-headphones-2.webp,
+Everyday Classic Tote Bag,everyday-classic-tote-bag,BM-1002,Fashion,<p>A roomy everyday tote in durable canvas with an inner pocket.</p>,1290,1590,NEW DROP,,yes,Sand,#cbb3a0,,,,20,everyday-classic-tote-bag-1.webp|everyday-classic-tote-bag-2.webp,
+Everyday Classic Tote Bag,everyday-classic-tote-bag,,,,,,,,,Charcoal,#5e5a52,,,,25,,everyday-classic-tote-bag-2.webp
+Everyday Classic Tote Bag,everyday-classic-tote-bag,,,,,,,,,Sage,#b4c4ac,,,1390,15,,
+Minimalist Table Lamp,minimalist-table-lamp,BM-1003,Home,"<p>A warm, minimal table lamp that suits desks and bedsides.</p>",1890,2400,-21%,25,yes,,,,,,,minimalist-table-lamp-1.webp|minimalist-table-lamp-2.webp,
+Smart Active Watch,smart-active-watch,BM-1004,Fitness,"<p>Track steps, sleep and workouts with a bright, easy-to-read display.</p>",3490,4200,HOT PICK,30,yes,,,,,,,smart-active-watch-1.webp|smart-active-watch-2.webp,
+Vacuum Insulated Tumbler,vacuum-insulated-tumbler,BM-1005,Beauty,<p>Keeps drinks hot for 12 hours or cold for 24. Leak-proof lid.</p>,890,1190,POPULAR,100,yes,,,,,,,vacuum-insulated-tumbler-1.webp|vacuum-insulated-tumbler-2.webp,
+Portable Bluetooth Speaker,portable-bluetooth-speaker,BM-1006,Tech,<p>Pocket-sized speaker with clear sound and a splash-proof body.</p>,2190,2790,-21%,35,yes,,,,,,,portable-bluetooth-speaker-1.webp|portable-bluetooth-speaker-2.webp,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,BM-1007,Fashion,"<p>Light, cushioned sneakers for all-day comfort.</p>",2890,3590,NEW DROP,,yes,Cloud,#eae9df,40,,,6,cloudstep-everyday-sneakers-1.webp|cloudstep-everyday-sneakers-2.webp,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Cloud,#eae9df,41,,,6,,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Cloud,#eae9df,42,,,6,,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Cloud,#eae9df,43,,,6,,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Mint,#b6cebc,40,,,6,,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Mint,#b6cebc,41,,,6,,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Mint,#b6cebc,42,,,6,,
+Cloudstep Everyday Sneakers,cloudstep-everyday-sneakers,,,,,,,,,Mint,#b6cebc,43,,,6,,
+Retro Everyday Sunglasses,retro-everyday-sunglasses,BM-1008,Lifestyle,<p>Classic retro frames with UV400 protection.</p>,690,890,TRENDING,80,yes,,,,,,,retro-everyday-sunglasses-1.webp|retro-everyday-sunglasses-2.webp,

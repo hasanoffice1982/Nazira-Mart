@@ -1,0 +1,1 @@
+<ol class="timeline">{% for h in order.history.all %}<li><b>{{ h.get_status_display }}</b><span>{{ h.created_at|date:"d M Y, h:i A" }}</span>{% if h.note %}<small>{{ h.note }}</small>{% endif %}</li>{% endfor %}</ol>

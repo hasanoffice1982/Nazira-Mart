@@ -1,0 +1,8 @@
+[Unit]
+Description=NarizMart: nightly database backup
+
+[Service]
+Type=oneshot
+User=narizmart
+EnvironmentFile=/srv/narizmart/shared/.env
+ExecStart=/srv/narizmart/current/deploy/backup-db.sh

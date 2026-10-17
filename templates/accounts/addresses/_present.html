@@ -1,0 +1,7 @@
+<div class="addr-panel"><div class="addr-head"><div><h3>Present address</h3><p class="muted">Where you live. Used for billing and invoices.</p></div>
+{% if not form %}<button type="button" class="btn btn-light btn-sm" hx-get="{% url 'accounts:address_present' %}?edit=1" hx-target="#present-box">{% if present %}Edit{% else %}Add present address{% endif %}</button>{% endif %}</div>
+{% if form %}<form hx-post="{% url 'accounts:address_present' %}" hx-target="#present-box" novalidate>{% csrf_token %}
+<div class="addr-form-grid">{% include "components/form_fields.html" %}</div>
+<div class="addr-actions"><button class="btn btn-dark btn-sm" type="submit">Save present address</button><button type="button" class="btn btn-light btn-sm" hx-get="{% url 'accounts:address_present' %}" hx-target="#present-box">Cancel</button></div></form>
+{% elif present %}<div class="addr-body"><b>{{ present.full_name }}</b> · {{ present.phone }}<br>{{ present.address }}, {{ present.city }}<br><span class="muted">{{ present.get_delivery_area_display }}</span></div>
+{% else %}<p class="muted">No present address saved yet.</p>{% endif %}</div>

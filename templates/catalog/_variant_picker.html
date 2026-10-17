@@ -1,0 +1,11 @@
+{% comment %}Params: product. Plain radios submitted with the form; app.js only enhances (price, availability).{% endcomment %}
+{% with colors=product.colors sizes=product.sizes %}
+<div class="vpicker" data-variant-picker data-currency="{{ currency }}" data-base-price="{{ product.price|floatformat:'-2' }}">
+{% if colors %}<fieldset class="vgroup"><legend>Color: <b data-chosen="color">choose</b></legend><div class="vopts">
+{% for c in colors %}<label class="swatch" title="{{ c.name }}"><input type="radio" name="color" value="{{ c.pk }}" data-name="{{ c.name }}" required><span class="dot" style="background:{{ c.hex_code }}"></span><span class="sr">{{ c.name }}</span></label>{% endfor %}</div></fieldset>{% endif %}
+{% if sizes %}<fieldset class="vgroup"><legend>Size: <b data-chosen="size">choose</b></legend><div class="vopts">
+{% for s in sizes %}<label class="sizeopt"><input type="radio" name="size" value="{{ s.pk }}" data-name="{{ s.name }}" required><span>{{ s.name }}</span></label>{% endfor %}</div></fieldset>{% endif %}
+<p class="vstatus muted" data-variant-status aria-live="polite"></p>
+<ul class="vdata" hidden>{% for v in product.active_variants %}<li data-color="{{ v.color_id|default:'' }}" data-size="{{ v.size_id|default:'' }}" data-stock="{{ v.stock }}" data-price="{{ v.unit_price|floatformat:'-2' }}"></li>{% endfor %}</ul>
+</div>
+{% endwith %}

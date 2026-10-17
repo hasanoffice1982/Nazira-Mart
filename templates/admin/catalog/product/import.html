@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block content %}
+<div class="import-page">
+{% if not plan %}
+<div class="card"><div class="card-body">
+<h3>Import products &amp; variants</h3>
+<p>One row per <b>variant</b>. Rows with the same <code>slug</code> (or name) become one product. Download the demo file, fill it in Excel or Google Sheets, save as <b>CSV UTF-8</b>, then upload it here. You'll see a full preview before anything is saved.</p>
+<p><a class="btn btn-secondary btn-sm" href="{% url 'admin:catalog_product_import_template' %}">⬇ Download demo CSV</a> <a class="btn btn-outline-primary btn-sm" href="{% url 'admin:catalog_product_photos_upload' %}">🖼 Upload photos only (match by file name)</a></p>
+<form method="post" enctype="multipart/form-data" class="import-form">{% csrf_token %}
+<p><label for="csv_file"><b>CSV file</b> <span class="muted">(max {{ max_kb }} KB, {{ max_rows }} rows; not needed if you are only adding photos)</span></label><br><input type="file" id="csv_file" name="csv_file" accept=".csv,text/csv">
+<span class="import-help"><b>How photos work</b>
+<ul>
+<li>Put photo file names in the <code>images</code> column (shown for every color) and, on a variant row, in <code>color_images</code> (that color only).</li>
+<li>Separate photos with a comma or <code>|</code>, for example <code>tee-1.jpg, tee-2.jpg</code>. A file name or a full <code>http(s)</code> link both work, and you can mix them.</li>
+<li><b>Photos only?</b> Leave the CSV empty, choose just the photo ZIP(s) and click the button: the photos are attached to the products whose CSV row listed those file names.</li>
+<li><b>Photos can come now or later.</b> File names found in the Photos ZIP below are attached now (you can choose several ZIP parts at once: up to {{ max_zips }} ZIPs, {{ max_zip_mb }} MB each, {{ max_total_mb }} MB together). File names that are not in the ZIP, or when you upload no ZIP, are saved with the product and the photos are <b>attached automatically</b> when you upload them later with <a href="{% url 'admin:catalog_product_photos_upload' %}">Upload photos</a>.</li>
+<li>Each photo can be JPEG, PNG or WebP, up to 5 MB, and is compressed automatically.</li>
+<li>Maximum <b>{{ max_per_product }} photos per product</b> (shared plus per-color), {{ max_refs }} photos and {{ max_links }} links per import. Import in batches if you have more.</li>
+<li>Photos listed in the CSV <b>replace</b> that product's existing photos of the same kind, so importing the CSV again never creates duplicates. Photos are added in the background after the products are saved.</li>
+</ul></span></p>
+<p><label for="photos_zip"><b>Photos ZIP</b> <span class="muted">(optional; select one or several ZIP parts, up to {{ max_zip_mb }} MB each and {{ max_total_mb }} MB together: JPEG, PNG or WebP, up to 5 MB each; compressed automatically)</span></label><br>
+<input type="file" id="photos_zip" name="photos_zip" accept=".zip,application/zip" multiple data-max-total="{{ max_total_bytes }}" data-max-files="{{ max_zips }}" data-chunk-url="{% url 'admin:catalog_product_import_zip_chunk' %}" data-chunk-size="{{ chunk_size }}" data-max-bytes="{{ max_zip_bytes }}">
+<input type="hidden" name="zip_token" id="zip_token" value="">
+<span id="zip_status" class="muted" role="status" aria-live="polite"></span>
+<span id="zip_bar" style="display:none;height:8px;background:#e5eee9;border-radius:6px;overflow:hidden;margin-top:6px;max-width:420px"><span id="zip_fill" style="display:block;height:100%;width:0;background:#2f8a76;transition:width .2s"></span></span></p>
+
+<fieldset><legend>If a product's slug already exists</legend>
+<label><input type="radio" name="mode" value="upsert" {% if mode != "create" %}checked{% endif %}> Update it and its variants</label><br>
+<label><input type="radio" name="mode" value="create" {% if mode == "create" %}checked{% endif %}> Skip it (create new products only)</label></fieldset>
+<p><label><input type="checkbox" name="create_missing" {% if create_missing %}checked{% endif %}> Create missing categories, colors and sizes automatically</label></p>
+<button class="btn btn-primary" id="import_submit" type="submit">Upload &amp; preview</button>
+<a class="btn btn-secondary" href="{% url 'admin:catalog_product_changelist' %}">Cancel</a></form></div></div>
+<div class="card"><div class="card-body"><h4>Columns</h4>
+<table class="table table-sm"><tbody>
+<tr><td><code>name</code>, <code>category</code>, <code>price</code></td><td>Required on a product's first row.</td></tr>
+<tr><td><code>slug</code>, <code>sku</code>, <code>description</code>, <code>old_price</code>, <code>badge</code>, <code>is_active</code></td><td>Optional product fields (leave blank on later rows of the same product).</td></tr>
+<tr><td><code>stock</code></td><td>Only for products <b>without</b> variants.</td></tr>
+<tr><td><code>color</code>, <code>color_hex</code>, <code>size</code></td><td>Fill color and/or size to make a variant. <code>color_hex</code> like <code>#1c3129</code> sets the swatch.</td></tr>
+<tr><td><code>variant_sku</code>, <code>variant_price</code>, <code>variant_stock</code></td><td>Optional SKU (auto-generated if blank), price override, and stock for that variant.</td></tr>
+<tr><td><code>images</code></td><td>Photos shown for every color, e.g. <code>tee-front.jpg, tee-back.jpg</code> (or with <code>|</code>). Separate photos with <code>|</code> or a comma. Each entry is a <b>filename inside the ZIP(s)</b> or a full <b>http(s) link</b>; you can mix both. Photos can be split across several ZIP parts.</td></tr>
+<tr><td><code>color_images</code></td><td>On a variant row: photos for that row's <code>color</code> only, same format. Repeating the color on other rows is fine.</td></tr>
+</tbody></table>
+<p class="muted">Photos listed in the CSV <b>replace</b> that product's existing photos of the same kind (shared, or that color), so re-importing never duplicates. Photos are added in the background after the products are saved. Up to {{ 1500 }} photos and 150 links per import.</p></div></div>
+{% else %}
+{% if plan.errors %}
+<div class="card card-danger"><div class="card-body"><h3>{{ plan.errors|length }} problem{{ plan.errors|length|pluralize }} found — nothing was imported</h3>
+<p>Fix these in your file and upload it again.</p>
+<table class="table table-sm"><thead><tr><th style="width:90px">Line</th><th>Problem</th></tr></thead><tbody>
+{% for line, msg in plan.errors %}<tr><td>{% if line %}{{ line }}{% else %}—{% endif %}</td><td>{{ msg }}</td></tr>{% endfor %}</tbody></table>
+<a class="btn btn-secondary" href="{% url 'admin:catalog_product_import' %}">← Upload a corrected file</a></div></div>
+{% else %}
+<div class="card"><div class="card-body"><h3>Preview: {{ filename|default:"your file" }}</h3>
+<p><b>{{ plan.stats.new }}</b> new product{{ plan.stats.new|pluralize }}, <b>{{ plan.stats.updated }}</b> to update, <b>{{ plan.stats.variants }}</b> variant row{{ plan.stats.variants|pluralize }}{% if plan.stats.skipped %}, <b>{{ plan.stats.skipped }}</b> skipped (already exist){% endif %}.</p>
+{% if plan.stats.images %}<p><b>{{ plan.stats.images }}</b> photo{{ plan.stats.images|pluralize }} will be added in the background after you confirm.</p>{% endif %}
+{% if plan.stats.pending %}<p><b>{{ plan.stats.pending }}</b> photo name{{ plan.stats.pending|pluralize }} {{ plan.stats.pending|pluralize:"is,are" }} not in a ZIP yet. {{ plan.stats.pending|pluralize:"It will,They will" }} be saved with the products and attached automatically when you upload the photos later (Products → Upload photos).</p>{% endif %}
+{% if plan.new_categories or plan.new_colors or plan.new_sizes %}<p class="muted">Will also create:
+{% if plan.new_categories %}categories <b>{{ plan.new_categories|join:", " }}</b>; {% endif %}{% if plan.new_colors %}colors <b>{{ plan.new_colors|join:", " }}</b>; {% endif %}{% if plan.new_sizes %}sizes <b>{{ plan.new_sizes|join:", " }}</b>{% endif %}</p>{% endif %}
+<table class="table table-sm"><thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Price</th><th>Variants</th><th>Photos</th><th>Action</th></tr></thead><tbody>
+{% for p in plan.products %}<tr><td><b>{{ p.name }}</b><br><span class="muted">{{ p.slug }}</span></td><td>{{ p.sku|default:"(auto)" }}</td><td>{{ p.category }}</td><td>{{ p.price }}</td>
+<td>{% if p.variants %}{% for v in p.variants %}<span class="status">{{ v.color }}{% if v.color and v.size %} / {% endif %}{{ v.size }} · {{ v.stock }}</span> {% endfor %}{% else %}none · stock {{ p.stock }}{% endif %}</td>
+<td>{{ p.images|length }}{% if p.color_images %} + {% for c, r in p.color_images.items %}{{ r|length }}{% if not forloop.last %}+{% endif %}{% endfor %} by color{% endif %}{% if p.pending_images or p.pending_color_images %}<br><span class="muted">waiting: {{ p.pending_images|length }}{% for c, r in p.pending_color_images.items %} + {{ r|length }}{% endfor %}</span>{% endif %}</td>
+<td>{% if p.exists %}<span class="status status-pending">Update</span>{% else %}<span class="status">New</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
+<form method="post" action="{% url 'admin:catalog_product_import_confirm' %}" class="import-form">{% csrf_token %}
+<button class="btn btn-primary" type="submit">Confirm import</button>
+<a class="btn btn-secondary" href="{% url 'admin:catalog_product_import' %}">Cancel</a></form></div></div>
+{% endif %}
+{% endif %}
+</div>
+<script src="{% static 'js/zip_uploader.js' %}"></script>
+{% endblock %}

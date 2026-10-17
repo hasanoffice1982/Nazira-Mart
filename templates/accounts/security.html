@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Security — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><h1>Security</h1><p class="muted">Protect your account with an emailed sign-in code.</p>
+<div class="addr-panel" style="margin:18px 0"><div class="addr-head"><div><h3>Sign-in code (2FA)</h3><p class="muted">After your password, we email a 6-digit code to {{ user.email }}.</p></div>
+<span class="status {% if user.requires_two_factor %}{% else %}status-pending{% endif %}">{% if user.requires_two_factor %}On{% else %}Off{% endif %}</span></div>
+{% if user.is_staff or user.is_superuser %}<p class="muted">Required for staff accounts — it can't be turned off.</p>
+{% elif user.two_factor_enabled %}<form method="post" action="{% url 'accounts:two_factor_disable' %}" novalidate>{% csrf_token %}{% include "components/form_fields.html" with form=disable_form %}<button class="btn btn-light btn-sm" type="submit">Turn off sign-in codes</button></form>
+{% else %}<form method="post" action="{% url 'accounts:two_factor_enable' %}">{% csrf_token %}<button class="btn btn-dark btn-sm" type="submit">Turn on sign-in codes</button></form>
+{% if not user.email_verified %}<p class="muted" style="margin-top:10px">Verify your email first — codes are sent there.</p>{% endif %}{% endif %}</div>
+<p class="center"><a href="{% url 'accounts:account' %}">← Back to account</a></p></div></section>
+{% endblock %}

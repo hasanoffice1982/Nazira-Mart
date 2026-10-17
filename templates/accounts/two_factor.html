@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Enter your sign-in code — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><div class="empty-big center">🔐</div><h1 class="center">Enter your sign-in code</h1>
+<p class="muted center">We emailed a 6-digit code to <b>{{ masked_email }}</b>. It expires in 10 minutes.</p>
+<form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-dark btn-full" type="submit">Verify &amp; sign in</button></form>
+<div class="center" style="margin-top:14px"><form method="post" action="{% url 'accounts:two_factor_resend' %}" style="display:inline">{% csrf_token %}<button class="linklike" type="submit">Resend code</button></form> ·
+<form method="post" action="{% url 'accounts:logout' %}" style="display:inline">{% csrf_token %}<button class="linklike" type="submit">Use a different account</button></form></div>
+</div></section>
+{% endblock %}

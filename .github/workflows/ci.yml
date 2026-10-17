@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+# a newer push to the same branch cancels the older run
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check .
+      - name: JavaScript syntax
+        run: |
+          for f in static/js/app.js static/js/narizmart-art.js static/js/tracking.js static/js/zip_uploader.js; do node --check "$f"; done
+      - name: Shell scripts
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck --severity=warning deploy/*.sh
+
+  test:
+    name: Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: narizmart
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/narizmart
+      SECRET_KEY: ci-only-not-a-secret
+      DJANGO_SETTINGS_MODULE: config.settings.development
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Migrations are in sync with the models
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Production settings check (errors fail the build)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          ALLOWED_HOSTS: example.com
+          CSRF_TRUSTED_ORIGINS: https://example.com
+          RESEND_API_KEY: re_ci_dummy_key
+        run: python manage.py check --deploy --fail-level ERROR
+
+      - name: Static files build with the production storage
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          ALLOWED_HOSTS: example.com
+          STATIC_ROOT: ${{ runner.temp }}/static
+        run: python manage.py collectstatic --noinput --verbosity 0
+
+      - name: Tests with coverage
+        run: pytest -q --cov --cov-report=term --cov-report=xml --cov-fail-under=88
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Informational: new advisories appear without any code change, so this reports but never blocks a deploy.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install pip-audit
+      - run: pip-audit -r requirements.txt --strict

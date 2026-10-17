@@ -1,0 +1,9 @@
+Welcome to {{ brand }}{% if user.first_name %}, {{ user.first_name }}{% endif %}!
+
+Please confirm your email address (link valid for 3 days):
+
+{{ verify_url }}
+
+If you didn't create this account, ignore this email.
+
+— {{ brand }}

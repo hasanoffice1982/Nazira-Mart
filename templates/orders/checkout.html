@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Checkout — NarizMart{% endblock %}
+{% block content %}
+<section class="container section"><h2 class="section-title">Checkout</h2>
+<div class="checkout-grid"><form method="post" class="auth-card" novalidate>{% csrf_token %}<h3>Delivery details</h3>
+{% if guest and not user.is_authenticated %}<p class="muted">Already have an account? <a href="{% url 'accounts:login' %}?next={% url 'orders:checkout' %}">Sign in</a> — or just continue as a guest. We'll create an account for you.</p>{% endif %}
+{% for e in form.non_field_errors %}<div class="flash flash-error">{{ e }}</div>{% endfor %}
+{% if form.email %}{% include "components/field.html" with field=form.email %}{% endif %}
+{% if form.address_choice %}<div class="pick-list">{% include "components/field.html" with field=form.address_choice %}</div>
+<p class="muted"><a href="{% url 'accounts:addresses' %}">Manage my addresses</a></p>{% endif %}
+<div id="new-address-fields" data-new-address-fields>
+{% include "components/field.html" with field=form.full_name %}
+{% include "components/field.html" with field=form.phone %}
+{% include "components/field.html" with field=form.address %}
+{% include "components/field.html" with field=form.city %}
+{% include "components/field.html" with field=form.delivery_area %}
+{% include "components/field.html" with field=form.notes %}
+{% if form.save_address %}{% include "components/field.html" with field=form.save_address %}{% endif %}
+</div>
+{% include "components/field.html" with field=form.hp_contact %}
+<div class="pay-box"><b>Payment:</b> Cash on delivery — pay when your order arrives.</div>
+<button class="btn btn-dark btn-full" type="submit">{% if guest %}Continue — email me a code{% else %}Place order{% endif %} · {{ currency }}{{ payable|floatformat:"-2g" }}</button>
+{% if guest %}<p class="muted center" style="margin-top:12px">Your order is placed after you enter the 6-digit code we email you. This keeps fake orders out.</p>{% endif %}</form>
+<aside class="auth-card summary"><h3>Your bag</h3>
+{% for l in lines %}<div class="sum-line"><span>{{ l.product.name }}{% if l.label %} ({{ l.label }}){% endif %} × {{ l.quantity }}</span><b>{{ currency }}{{ l.total|floatformat:"-2g" }}</b></div>{% endfor %}
+<div class="sum-line"><span>Subtotal</span><b>{{ currency }}{{ subtotal|floatformat:"-2g" }}</b></div>
+{% if discount %}<div class="sum-line sum-discount"><span>{{ deal.label }}{% if deal.coupon_code %} <small>({{ deal.coupon_code }})</small>{% endif %}</span><b>−{{ currency }}{{ discount|floatformat:"-2g" }}</b></div>{% endif %}
+{% if deal.nudge %}<p class="promo-nudge">{{ deal.nudge }}</p>{% endif %}
+<div class="coupon-box">{% if deal.coupon_code %}<form method="post" action="{% url 'orders:coupon_remove' %}">{% csrf_token %}<span class="coupon-on">Code <b>{{ deal.coupon_code }}</b> applied</span> <button class="link-btn" type="submit">Remove</button></form>
+{% else %}<form method="post" action="{% url 'orders:coupon_apply' %}" class="coupon-form">{% csrf_token %}<label class="sr-only" for="coupon">Coupon code</label><input id="coupon" name="code" value="{{ coupon }}" placeholder="Coupon code" autocomplete="off" maxlength="30"><button class="btn btn-light" type="submit">Apply</button></form>{% if deal.coupon_error %}<p class="field-error">{{ deal.coupon_error }}</p>{% endif %}{% endif %}</div>
+<div class="sum-line"><span>Delivery (Dhaka / outside)</span><b>{{ currency }}{{ charge_dhaka|floatformat:"-2g" }} / {{ currency }}{{ charge_outside|floatformat:"-2g" }}</b></div>
+<p class="muted">Final total is confirmed by the server when you place the order.</p></aside></div></section>
+{% endblock %}

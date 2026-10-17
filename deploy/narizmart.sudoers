@@ -1,0 +1,2 @@
+# Lets the app user restart only its own service (needed by deploy.sh). Install with: visudo -cf <file> first.
+narizmart ALL=(root) NOPASSWD: /usr/bin/systemctl restart narizmart.service, /usr/bin/systemctl reset-failed narizmart.service

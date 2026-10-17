@@ -1,0 +1,73 @@
+name: Release
+
+# Publishes a GitHub Release with automatic notes for a version tag.
+#   Automatic: git tag -a v1.2.0 -m "Short summary" && git push origin v1.2.0
+#   Manual:    Actions -> Release -> Run workflow, type an EXISTING tag (e.g. v1.2.0). Use this to publish a tag
+#              that was pushed before something here was fixed, without moving or recreating the tag.
+# The site itself still deploys on every green push to main; the tag just names a point in that history.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish, e.g. v1.2.0"
+        required: true
+
+permissions:
+  contents: write   # create the release
+  actions: read     # read CI results for the commit
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - name: Tag looks like a version (vMAJOR.MINOR.PATCH, optional -rc.1 style suffix)
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::'$TAG' is not a valid version tag. Use v1.2.3 or v1.2.3-rc.1"; exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag || github.ref_name }}   # always the tagged commit, even when run by hand
+          fetch-depth: 0
+
+      - name: Resolve the tagged commit
+        run: echo "SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Tag is on main (only released code can be published)
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::error::$TAG points at a commit that is not on main"; exit 1
+          fi
+
+      - name: CI passed for this exact commit
+        run: |
+          ok="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&status=success&per_page=1" --jq '.total_count')"
+          if [[ "$ok" -lt 1 ]]; then
+            echo "::error::No successful CI run for $SHA. Wait for CI to finish on main, then re-run this workflow."; exit 1
+          fi
+
+      - name: Create the GitHub Release
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::A release for $TAG already exists"; exit 1
+          fi
+          flags=(--verify-tag --generate-notes --title "$TAG")
+          [[ "$TAG" == *-* ]] && flags+=(--prerelease)       # v1.2.0-rc.1 is a pre-release
+          gh release create "$TAG" "${flags[@]}"
+          {
+            echo "### Released \`$TAG\`"
+            echo "Commit \`${SHA::7}\`. Production updates from \`main\` automatically; to deploy exactly this tag, use **Actions → Deploy → Run workflow** with ref \`$TAG\`."
+          } >> "$GITHUB_STEP_SUMMARY"

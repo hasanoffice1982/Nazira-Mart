@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Edit profile — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><h1>Edit profile</h1><p class="muted">Email: {{ user.email }}</p>
+<form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-dark btn-full" type="submit">Save changes</button></form>
+<p class="center"><a href="{% url 'accounts:account' %}">← Back to account</a></p></div></section>
+{% endblock %}

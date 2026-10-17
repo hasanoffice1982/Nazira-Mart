@@ -1,0 +1,11 @@
+{% load images richtext %}<div class="modal-grid"><div class="modal-art-wrap"><div class="gallery" data-gallery style="background:{{ product.bg_color }}">
+<div class="gallery-main">
+<div class="swiper gallery-swiper" data-gallery-swiper hidden><div class="swiper-wrapper"></div><div class="swiper-button-prev" aria-label="Previous photo"></div><div class="swiper-button-next" aria-label="Next photo"></div><div class="swiper-pagination"></div></div>
+<div class="gallery-single" data-gallery-single>{% with cover=product.cover_image %}{% if cover %}{% responsive_img cover alt=product.name sizes="(max-width: 800px) 100vw, 600px" eager=True %}{% else %}{% include "components/media.html" with image=None art=product.art_type alt=product.name %}{% endif %}{% endwith %}</div></div>
+<div class="gallery-thumbs" data-gallery-thumbs></div>
+<ul hidden data-gallery-data>{% for img in product.gallery_images %}<li data-color="{{ img.color_id|default:'' }}" data-src="{{ img.image|rendition:960 }}" data-thumb="{{ img.image|rendition:160 }}" data-alt="{{ img.alt_text|default:product.name }}"></li>{% endfor %}</ul></div></div><div class="modal-details"><small>{{ product.category.name|upper }} / NARIZMART EDIT</small><h3>{{ product.name }}</h3><div class="rich prod-desc">{{ product.description|rich }}</div>
+<div class="modal-price"><span data-price-text>{% if product.price_varies %}From {% endif %}{{ currency }}{{ product.from_price|floatformat:"-2g" }}</span>{% if product.old_price and not product.has_variants %} <s style="font-size:12px;color:#aab4ac;font-weight:500">{{ currency }}{{ product.old_price|floatformat:"-2g" }}</s>{% endif %}</div>
+{% if product.in_stock %}<form hx-post="{% url 'cart:add' product.pk %}" hx-target="#cartBody" class="buy-form"><input type="hidden" name="open" value="1">
+{% if product.has_variants %}{% include "catalog/_variant_picker.html" %}{% endif %}
+<button class="btn btn-dark" type="submit">Add to bag <span data-icon="shopping-bag" class="tinyicon"></span></button></form>{% else %}<span class="oos">Out of stock</span>{% endif %}
+<p style="margin-top:14px"><a href="{{ product.get_absolute_url }}" class="viewall">Full details →</a></p></div></div>

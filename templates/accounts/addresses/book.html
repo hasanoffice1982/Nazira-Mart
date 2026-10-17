@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}My addresses — NarizMart{% endblock %}
+{% block content %}
+<section class="container addr-wrap">
+<p class="crumbs"><a href="{% url 'accounts:account' %}">← My account</a></p>
+<div class="section-top"><div><div class="section-label">ADDRESS BOOK</div><h2 class="section-title">My addresses</h2></div></div>
+<div id="present-box">{% include "accounts/addresses/_present.html" %}</div>
+<div id="shipping-section">{% include "accounts/addresses/_shipping_section.html" %}</div>
+</section>
+{% endblock %}

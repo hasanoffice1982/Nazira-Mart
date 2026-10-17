@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Slow down — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card center"><div class="empty-big">⏱️</div><h1>Too many attempts</h1><p class="muted">For your security we've paused this action. Please wait a few minutes and try again.</p><a class="btn btn-dark" href="{% url 'catalog:home' %}">Back to the store</a></div></section>
+{% endblock %}

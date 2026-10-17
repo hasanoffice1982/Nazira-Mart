@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}My account — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><h1>Hi, {{ user.display_name }}</h1><p class="muted">{{ user.email }}{% if user.phone %} · {{ user.phone }}{% endif %}</p>
+{% if user.email_verified %}<p class="status">✓ Email verified</p>{% else %}<div class="flash flash-warn"><b>Verify your email</b> to place orders and recover your account.
+<form method="post" action="{% url 'accounts:verify_resend' %}">{% csrf_token %}<button class="btn btn-dark" type="submit" style="height:38px;margin-top:10px">Resend verification email</button></form></div>{% endif %}
+<p><a class="btn btn-dark btn-full" href="{% url 'orders:list' %}">My orders &amp; tracking</a></p>
+<p><a class="btn btn-light btn-full" href="{% url 'wishlist:list' %}">My wishlist ({{ wishlist_count }})</a></p>
+<p><a class="btn btn-light btn-full" href="{% url 'accounts:addresses' %}">My addresses</a></p>
+<p><a class="btn btn-light btn-full" href="{% url 'accounts:profile' %}">Edit profile</a></p>
+<p><a class="btn btn-light btn-full" href="{% url 'accounts:password_change' %}">Change password</a></p>
+<p><a class="btn btn-light btn-full" href="{% url 'accounts:security' %}">Security &amp; sign-in code {% if user.requires_two_factor %}(on){% endif %}</a></p>
+<form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn btn-light btn-full" type="submit">Sign out</button></form>
+</div></section>
+{% endblock %}

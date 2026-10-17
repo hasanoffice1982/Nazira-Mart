@@ -1,0 +1,2 @@
+{% load images %}{% comment %}Real photo when uploaded (served as resized WebP), otherwise the illustration. Params: image, art, alt, sizes, eager{% endcomment %}
+{% if image %}{% responsive_img image alt=alt sizes=sizes|default:"(max-width: 700px) 50vw, 320px" eager=eager %}{% else %}<span data-art="{{ art }}" style="display:contents"></span>{% endif %}

@@ -1,0 +1,13 @@
+<div class="addr-panel"><div class="addr-head"><div><h3>Shipping addresses</h3><p class="muted">Where we deliver. {{ addresses|length }} of {{ max_addresses }} saved.</p></div>
+{% if not form and can_add %}<button type="button" class="btn btn-dark btn-sm" hx-get="{% url 'accounts:address_new' %}" hx-target="#shipping-section">+ Add address</button>{% endif %}</div>
+{% if form %}<form class="addr-form" hx-post="{% if editing %}{% url 'accounts:address_edit' editing.pk %}{% else %}{% url 'accounts:address_new' %}{% endif %}" hx-target="#shipping-section" novalidate>{% csrf_token %}
+<h4>{% if editing %}Edit address{% else %}New shipping address{% endif %}</h4>
+<div class="addr-form-grid">{% include "components/form_fields.html" %}</div>
+<div class="addr-actions"><button class="btn btn-dark btn-sm" type="submit">Save address</button><button type="button" class="btn btn-light btn-sm" hx-get="{% url 'accounts:address_shipping' %}" hx-target="#shipping-section">Cancel</button></div></form>{% endif %}
+<div class="addr-grid">{% for a in addresses %}
+<article class="addr-card {% if a.is_default %}is-default{% endif %}"><div class="addr-card-top"><b>{{ a.get_label_display }}</b>{% if a.is_default %}<span class="status">Default</span>{% endif %}</div>
+<p class="addr-body"><b>{{ a.full_name }}</b> · {{ a.phone }}<br>{{ a.address }}, {{ a.city }}<br><span class="muted">{{ a.get_delivery_area_display }}{% if a.notes %} · {{ a.notes }}{% endif %}</span></p>
+<div class="addr-actions"><button type="button" class="btn btn-light btn-sm" hx-get="{% url 'accounts:address_edit' a.pk %}" hx-target="#shipping-section">Edit</button>
+{% if not a.is_default %}<button type="button" class="btn btn-light btn-sm" hx-post="{% url 'accounts:address_default' a.pk %}" hx-target="#shipping-section">Make default</button>{% endif %}
+<button type="button" class="btn btn-light btn-sm btn-danger-text" hx-post="{% url 'accounts:address_delete' a.pk %}" hx-target="#shipping-section" hx-confirm="Delete this address?">Delete</button></div></article>
+{% empty %}{% if not form %}<p class="muted">No shipping addresses yet. Add one to check out faster.</p>{% endif %}{% endfor %}</div></div>

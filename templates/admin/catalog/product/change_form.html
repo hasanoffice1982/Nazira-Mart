@@ -1,0 +1,5 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools-items %}
+{% if original %}<li><a href="{% url 'admin:catalog_product_photos' original.pk %}" class="btn btn-outline-primary btn-sm">📷 Upload many photos</a></li>{% endif %}
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Message sent — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card center"><div class="empty-big">💌</div><h1>Message sent</h1><p class="muted">Thanks, {{ contact.name }}. We'll reply to <b>{{ contact.email }}</b> as soon as we can.</p><a class="btn btn-dark" href="{% url 'catalog:home' %}">Back to the store</a></div></section>
+{% endblock %}

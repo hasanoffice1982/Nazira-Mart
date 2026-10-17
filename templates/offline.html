@@ -1,0 +1,8 @@
+{% load static %}<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101e2d">
+<title>Offline — NarizMart</title>
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}"><link rel="stylesheet" href="{% static 'css/narizmart.css' %}"><link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head><body>
+<!-- Standalone on purpose: no account or cart data, because this page is cached and shown to anyone on the device. -->
+<main class="auth-wrap" style="min-height:100vh;align-items:center"><div class="auth-card center"><img src="{% static 'img/logo.png' %}" alt="NarizMart" style="width:150px;margin:0 auto 14px;display:block"><div class="empty-big">📡</div><h1>You're offline</h1><p class="muted">Check your connection and try again. Pages you've seen recently may still open.</p><a class="btn btn-dark" href="/">Try again</a></div></main>
+</body></html>

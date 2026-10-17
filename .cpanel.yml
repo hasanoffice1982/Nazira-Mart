@@ -1,0 +1,9 @@
+---
+# cPanel Git deploy: copies ONLY what the live site needs (no tests, docs, sample data, CI or VPS scripts).
+# Python App "application root" = /home/salespal/narizmart_app ; the git clone stays at /home/salespal/narizmart.
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/salespal/narizmart_app/
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R apps config templates static $DEPLOYPATH
+    - /bin/cp manage.py passenger_wsgi.py requirements-cpanel.txt $DEPLOYPATH

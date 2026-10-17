@@ -1,0 +1,8 @@
+Your {{ brand }} confirmation code is:
+
+{{ code }}
+
+It expires in {{ minutes }} minutes. Enter it on the checkout page to place your order.
+If you didn't try to order from {{ brand }}, ignore this email — nothing will be ordered.
+
+— {{ brand }}

@@ -1,0 +1,18 @@
+{% if cart_oob %}
+<i id="cartCount" class="count" hx-swap-oob="true">{{ cart_count }}</i>
+<i id="mobileCartCount" class="count" hx-swap-oob="true">{{ cart_count }}</i>
+<span id="cartLabel" hx-swap-oob="true">({{ cart_count }})</span>
+<small id="drawerCount" hx-swap-oob="true" style="color:#8ca297;font-size:12px">({{ cart_count }} items)</small>
+{% endif %}
+<div class="drawer-content" id="cartItems">
+{% for line in cart_lines %}
+<div class="cartitem"><div class="cartitem-img">{% include "components/media.html" with image=line.image art=line.product.art_type alt=line.product.name %}</div><div class="cartitem-details"><h4>{{ line.product.name }}</h4>{% if line.label %}<span class="cartitem-variant">{{ line.label }}</span>{% endif %}<span class="cartitem-price">{{ currency }}{{ line.unit_price|floatformat:"-2g" }}</span>
+<div class="qtyrow"><div class="qty">
+<button hx-post="{% url 'cart:qty' line.product.pk %}" hx-vals='{"delta":"-1","variant":"{{ line.variant.pk|default:'' }}"}' hx-target="#cartBody" aria-label="Decrease quantity">−</button><b>{{ line.quantity }}</b><button hx-post="{% url 'cart:qty' line.product.pk %}" hx-vals='{"delta":"1","variant":"{{ line.variant.pk|default:'' }}"}' hx-target="#cartBody" aria-label="Increase quantity">+</button></div>
+<button class="remove" hx-post="{% url 'cart:remove' line.product.pk %}" hx-vals='{"variant":"{{ line.variant.pk|default:'' }}"}' hx-target="#cartBody">Remove</button></div></div></div>
+{% empty %}
+<div class="cart-empty"><div class="empty-big">🛍️</div><h3>Your bag is waiting</h3><p>Let's find something you'll love.</p><a class="btn btn-dark" href="{% url 'catalog:shop' %}">Keep exploring <span data-icon="arrow-right" class="tinyicon"></span></a></div>
+{% endfor %}
+</div>
+<div class="drawer-bottom"><div class="totals"><span>Subtotal</span><strong id="subtotal">{{ currency }}{{ cart_subtotal|floatformat:"-2g" }}</strong></div>{% if cart_deal.amount %}<div class="totals drawer-discount"><span>{{ cart_deal.label }}</span><strong>−{{ currency }}{{ cart_deal.amount|floatformat:"-2g" }}</strong></div>{% endif %}{% if cart_deal.nudge %}<p class="promo-nudge">{{ cart_deal.nudge }}</p>{% endif %}<p>Delivery charges are calculated at checkout.</p>
+{% if cart_lines %}<a class="btn btn-full drawer-checkout" href="{% url 'orders:checkout' %}">Proceed to checkout <span data-icon="arrow-right" class="tinyicon"></span></a>{% endif %}</div>

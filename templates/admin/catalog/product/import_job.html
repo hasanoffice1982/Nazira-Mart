@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div class="import-page"><div class="card"><div class="card-body">
+<h3>Importing photos</h3>
+<p>Your products are already saved. Photos are being added in the background, so you can leave this page open or come back later. Photos are shrunk and converted automatically.</p>
+<div class="progress" style="height:12px;border-radius:6px"><div id="bar" class="progress-bar bg-success" style="width:0%"></div></div>
+<p id="line" class="muted" style="margin-top:10px">Starting…</p>
+<div id="problems"></div>
+<p><a class="btn btn-secondary" href="{% url 'admin:catalog_product_changelist' %}">Back to products</a></p>
+</div></div></div>
+<script>
+(function(){
+  var url = "{% url 'admin:catalog_product_import_job_status' job.pk %}", timer;
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function tick(){
+    fetch(url,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+      var pct = j.total ? Math.round(100*j.done/j.total) : 100;
+      document.getElementById('bar').style.width = pct+'%';
+      var msg = j.status==='done' ? 'Finished: '+j.done+' of '+j.total+' products processed.' :
+                j.status==='failed' ? 'The photo import stopped unexpectedly. Products are saved; upload the same CSV and ZIP again to retry.' :
+                j.stalled ? 'This import looks stuck (the server may have restarted). Upload the same CSV and ZIP again to retry; photos already added are replaced, not duplicated.' :
+                'Processing '+j.done+' of '+j.total+' products…';
+      document.getElementById('line').textContent = msg;
+      if (j.errors.length) document.getElementById('problems').innerHTML = '<h5>'+j.errors.length+' product(s) had photo problems (their old photos were kept)</h5><ul>'+j.errors.map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul>';
+      if (j.status==='done'||j.status==='failed'||j.stalled) clearInterval(timer);
+    }).catch(function(){});
+  }
+  tick(); timer = setInterval(tick, 2500);
+})();
+</script>
+{% endblock %}

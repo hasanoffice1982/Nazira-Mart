@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Sign in — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><h1>Welcome back</h1><p class="muted">Sign in to track orders and save favourites.</p>
+<form method="post" novalidate>{% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+{% include "components/form_fields.html" %}
+<p class="right"><a href="{% url 'accounts:password_reset' %}">Forgot password?</a></p>
+<button class="btn btn-dark btn-full" type="submit">Sign in</button></form>
+<p class="muted center">New to NarizMart? <a href="{% url 'accounts:register' %}">Create an account</a></p></div></section>
+{% endblock %}

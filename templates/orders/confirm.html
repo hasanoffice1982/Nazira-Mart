@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Confirm your order — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><div class="empty-big center">✉️</div><h1 class="center">Check your email</h1>
+<p class="muted center">We sent a 6-digit code to <b>{{ masked_email }}</b>. Enter it to place your order. It expires in 10 minutes.</p>
+<form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-dark btn-full" type="submit">Confirm &amp; place order</button></form>
+<form method="post" action="{% url 'orders:resend' %}" class="center" style="margin-top:14px">{% csrf_token %}<button class="linklike" type="submit">Resend code</button> · <a href="{% url 'orders:checkout' %}">Change email</a></form>
+</div></section>
+{% endblock %}

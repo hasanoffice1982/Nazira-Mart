@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}My wishlist — NarizMart{% endblock %}
+{% block content %}
+<section class="container section"><div class="section-top"><div><div class="section-label">SAVED FOR LATER</div><h2 class="section-title">My wishlist</h2></div></div>
+<div class="product-grid">{% for item in items %}{% include "components/product_card.html" with p=item.product %}{% empty %}<div class="empty">Your wishlist is empty. Tap ♡ on a product to save it.<br><a class="filter" style="margin-top:15px;display:inline-block" href="{% url 'catalog:shop' %}">Start exploring</a></div>{% endfor %}</div></section>
+{% endblock %}

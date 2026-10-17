@@ -1,0 +1,34 @@
+[Unit]
+Description=NarizMart (gunicorn)
+After=network.target postgresql.service
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=notify
+User=narizmart
+Group=www-data
+# creates /run/narizmart owned by narizmart:www-data; gunicorn puts its socket there
+RuntimeDirectory=narizmart
+RuntimeDirectoryMode=0750
+WorkingDirectory=/srv/narizmart/current
+EnvironmentFile=/srv/narizmart/shared/.env
+EnvironmentFile=-/srv/narizmart/shared/version.env
+Environment=DJANGO_SETTINGS_MODULE=config.settings.production
+ExecStart=/srv/narizmart/current/.venv/bin/gunicorn config.wsgi:application -c /srv/narizmart/current/gunicorn.conf.py
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=3
+# keep a runaway process from starving Postgres on a small server
+MemoryMax=1000M
+# hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/narizmart/shared
+
+[Install]
+WantedBy=multi-user.target

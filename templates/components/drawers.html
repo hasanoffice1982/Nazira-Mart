@@ -1,0 +1,11 @@
+<div class="scrim" id="scrim" data-action="close-panels"></div>
+<div class="drawer" id="cartDrawer"><div class="drawer-head"><strong>My shopping bag <small id="drawerCount" style="color:#8ca297;font-size:12px">({{ cart_count }} items)</small></strong><button class="close" data-action="close-panels" aria-label="Close cart"><span data-icon="x"></span></button></div>
+<div id="cartBody" class="drawer-body">{% include "cart/_drawer_body.html" %}</div></div>
+<div class="drawer" id="menuDrawer"><div class="drawer-head"><strong>Explore NarizMart</strong><button class="close" data-action="close-panels" aria-label="Close menu"><span data-icon="x"></span></button></div><div class="drawer-content">
+<a class="drawer-menu-item" href="{% url 'catalog:shop' %}">Shop all <span data-icon="arrow-right" class="tinyicon"></span></a>
+{% for c in nav_categories %}<a class="drawer-menu-item" href="{% url 'catalog:shop' %}?category={{ c.slug }}">{{ c.title }} <span data-icon="arrow-right" class="tinyicon"></span></a>{% endfor %}
+<a class="drawer-menu-item" href="{% url 'accounts:addresses' %}">My addresses <span data-icon="arrow-right" class="tinyicon"></span></a>
+<a class="drawer-menu-item" href="{% url 'orders:list' %}">My orders <span data-icon="arrow-right" class="tinyicon"></span></a>
+{% if user.is_authenticated %}<form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="drawer-menu-item" type="submit">Sign out <span data-icon="arrow-right" class="tinyicon"></span></button></form>{% else %}<a class="drawer-menu-item" href="{% url 'accounts:login' %}">Sign in <span data-icon="arrow-right" class="tinyicon"></span></a>{% endif %}
+</div></div>
+<div class="modal" id="quickModal" role="dialog" aria-modal="true" aria-label="Product details"><button class="close" data-action="close-panels" aria-label="Close details"><span data-icon="x"></span></button><div id="quickBody"></div></div>

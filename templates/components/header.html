@@ -1,0 +1,15 @@
+{% load static %}<header class="top-head"><div class="container head-inner">
+<button class="hamb" aria-label="Open menu" data-action="open-menu" id="menuToggle"><span data-icon="menu"></span></button>
+<a href="{% url 'catalog:home' %}" aria-label="NarizMart home"><img class="logo" src="{% static 'img/logo.png' %}" alt="NarizMart"></a>
+<form class="search-area" action="{% url 'catalog:shop' %}" method="get" role="search">
+<input id="desktopSearch" name="q" value="{{ query|default:'' }}" placeholder="Search products, categories and more..." aria-label="Search products" autocomplete="off" hx-get="{% url 'catalog:suggest' %}" hx-trigger="input changed delay:250ms, search" hx-target="#suggestDesktop" hx-swap="innerHTML"><div class="suggest" id="suggestDesktop"></div><span class="search-pill">⌘ K</span><button class="search-btn" aria-label="Search" type="submit"><span data-icon="search"></span></button></form>
+<div class="head-actions">
+{% if user.is_authenticated %}
+<a class="head-action account" href="{% url 'accounts:account' %}"><span class="icon-wrap" data-icon="user-round"></span><span class="atxt"><small>Hi, {{ user.display_name|truncatechars:12 }}</small><b>My Account</b></span></a>
+{% else %}
+<a class="head-action account" href="{% url 'accounts:login' %}"><span class="icon-wrap" data-icon="user-round"></span><span class="atxt"><small>Welcome!</small><b>Sign in</b></span></a>
+{% endif %}
+<a class="head-action" href="{% url 'wishlist:list' %}" aria-label="Wishlist"><span class="icon-wrap" data-icon="heart"></span><span class="atxt"><small>Your favorite</small><b>Wishlist</b></span></a>
+<button class="head-action" data-action="open-cart" aria-label="Open shopping cart"><span class="icon-wrap"><span data-icon="shopping-bag"></span><i class="count" id="cartCount">{{ cart_count }}</i></span><span class="atxt"><small>Your bag</small><b>Cart <span id="cartLabel">({{ cart_count }})</span></b></span></button>
+</div>
+</div><div class="container mobsearch"><form class="search-area" action="{% url 'catalog:shop' %}" method="get" role="search"><input id="mobileSearch" name="q" value="{{ query|default:'' }}" placeholder="What are you looking for today?" aria-label="Search products" autocomplete="off" hx-get="{% url 'catalog:suggest' %}" hx-trigger="input changed delay:250ms, search" hx-target="#suggestMobile" hx-swap="innerHTML"><div class="suggest" id="suggestMobile"></div><button class="search-btn" type="submit" aria-label="Search"><span data-icon="search"></span></button></form></div></header>

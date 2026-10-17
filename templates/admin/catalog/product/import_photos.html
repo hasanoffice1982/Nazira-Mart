@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block content %}
+<div class="import-page"><div class="card"><div class="card-body">
+<h3>Upload photos</h3>
+<p>Upload the photo ZIP(s) after a CSV import. Each photo is attached <b>by file name</b> to the product whose CSV row listed that name. Names that match nothing are ignored. Photos are compressed automatically.</p>
+{% if waiting_count %}<p><b>{{ waiting_count }}</b> photo name{{ waiting_count|pluralize }} on <b>{{ waiting_products }}</b> product{{ waiting_products|pluralize }} {{ waiting_count|pluralize:"is,are" }} waiting for upload.</p>
+<details><summary>Show the waiting file names{% if waiting_count > 40 %} (first 40){% endif %}</summary><p class="muted" style="word-break:break-all;line-height:1.7">{% for n in waiting_names %}<code>{{ n }}</code> {% endfor %}</p></details>
+{% else %}<p class="muted">No photo names are waiting right now. Import a CSV first: file names listed in its <code>images</code> column that have no photo yet are saved and show up here.</p>{% endif %}
+<form method="post" enctype="multipart/form-data" class="import-form">{% csrf_token %}
+<p><label for="photos_zip"><b>Photos ZIP</b> <span class="muted">(select one or several ZIP parts, up to {{ max_zip_mb }} MB each and {{ max_total_mb }} MB together: JPEG, PNG or WebP, up to 5 MB each)</span></label><br>
+<input type="file" id="photos_zip" name="photos_zip" accept=".zip,application/zip" multiple data-max-total="{{ max_total_bytes }}" data-max-files="{{ max_zips }}" data-chunk-url="{% url 'admin:catalog_product_import_zip_chunk' %}" data-chunk-size="{{ chunk_size }}" data-max-bytes="{{ max_zip_bytes }}" data-required="1" required>
+<input type="hidden" name="zip_token" id="zip_token" value="">
+<span id="zip_status" class="muted" role="status" aria-live="polite"></span>
+<span id="zip_bar" style="display:none;height:8px;background:#e5eee9;border-radius:6px;overflow:hidden;margin-top:6px;max-width:420px"><span id="zip_fill" style="display:block;height:100%;width:0;background:#2f8a76;transition:width .2s"></span></span></p>
+<button class="btn btn-primary" id="import_submit" type="submit">Attach photos</button>
+<a class="btn btn-secondary" href="{% url 'admin:catalog_product_changelist' %}">Cancel</a></form></div></div></div>
+<script src="{% static 'js/zip_uploader.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,57 @@
+# --- secrets (never commit) ---
+.env
+.env.*
+!.env.example
+!.env.cpanel.example
+*.pem
+*.key
+*.crt
+*.p12
+id_rsa*
+id_ed25519*
+*.ppk
+secrets/
+credentials*.json
+service-account*.json
+
+# --- databases and backups ---
+*.sqlite3
+*.sqlite3-journal
+*.db
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.backup
+backups/
+
+# --- runtime data ---
+media/
+staticfiles/
+import_tmp/
+*.log
+logs/
+
+# --- python ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- tooling / OS / editors ---
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~

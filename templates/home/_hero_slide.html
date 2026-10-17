@@ -1,0 +1,10 @@
+{% load richtext %}<div class="swiper-slide hero-slide{% if s.text_style == 'light' %} is-light{% endif %}" data-hero-slide{% if s.background_css %} style="background:{{ s.background_css }}"{% endif %}><div class="hero-text">
+{% if s.eyebrow %}<div class="eyebrow"><span class="eye-dot"></span> {{ s.eyebrow }}</div>{% endif %}
+{% if first %}<h1>{% else %}<h2 class="hero-title">{% endif %}{{ s.title }}{% if s.highlight %}<br><em>{{ s.highlight }}</em>{% endif %}{% if first %}</h1>{% else %}</h2>{% endif %}
+{% if s.text %}<div class="rich">{{ s.text|rich }}</div>{% endif %}
+{% if s.button_label and s.link or s.button2_label and s.button2_url %}<div class="button-row">{% if s.button_label and s.link %}<a class="btn btn-dark" href="{{ s.link }}">{{ s.button_label }} <span data-icon="arrow-up-right"></span></a>{% endif %}{% if s.button2_label and s.button2_url %}<a class="btn btn-light" href="{{ s.button2_url }}">{{ s.button2_label }}</a>{% endif %}</div>{% endif %}
+{% if s.proof_text %}<div class="hero-proof"><span class="avatar-stack"><span>😊</span><span>🙂</span><span>😎</span></span><span><span class="stars">★★★★★</span><br>{{ s.proof_text }}</span></div>{% endif %}
+</div><div class="hero-right"><div class="hero-stage"><div class="stage-circle"></div><div class="hero-object">{% include "components/media.html" with image=s.display_image art=s.display_art alt=s.title sizes="(max-width: 700px) 90vw, 520px" %}</div>
+{% if s.float_title %}<div class="mini-float"><span class="mini-green"><span data-icon="sparkles"></span></span><span>{{ s.float_title }}{% if s.float_text %}<br><small style="font-size:9px;color:#8ea096">{{ s.float_text }}</small>{% endif %}</span></div>{% endif %}
+{% if s.product and s.product.is_active %}<a class="hero-bubble" href="{{ s.product.get_absolute_url }}"><small>{{ s.bubble_label|default:"Featured" }}</small><b>{{ currency }} {{ s.product.from_price|floatformat:"-2g" }}</b> {% if s.product.old_price and not s.product.price_varies %}<s>{{ currency }} {{ s.product.old_price|floatformat:"-2g" }}</s>{% endif %}</a>{% endif %}
+<span class="spark spark1">✳</span><span class="spark spark2">✦</span></div></div></div>

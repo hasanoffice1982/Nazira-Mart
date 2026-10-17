@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Contact us — NarizMart{% endblock %}
+{% block content %}
+<section class="container auth-wrap"><div class="auth-card"><h1>Contact us</h1><p class="muted">Questions about an order or a product? Send us a message and we'll reply by email.</p>
+<form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-dark btn-full" type="submit">Send message</button></form>
+<p class="muted center">You can also find answers in the <a href="{% url 'core:page' 'help-center' %}">Help Center</a>.</p></div></section>
+{% endblock %}
