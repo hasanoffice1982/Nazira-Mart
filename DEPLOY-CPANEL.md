@@ -33,3 +33,10 @@ Notes: MySQL is not what the original project's CI tests against (PostgreSQL); r
 
 ## Keeping the server small
 `.cpanel.yml` copies only `apps/ config/ templates/ static/ manage.py passenger_wsgi.py requirements-cpanel.txt` to `/home/salespal/narizmart_app` on each deploy (Git Version Control > Manage > Deploy HEAD Commit). Use `/home/salespal/narizmart_app` as the Python App root and keep `.env` there. Tests, docs, sample data and CI files stay in Git only. Run `pytest` locally before pushing.
+
+## Automatic deploy after `git push`
+1. Log in once over SSH/Terminal and clone to `/home/salespal/narizmart` (cPanel Git does this). Create the Python App (root `narizmart_app`), put `.env` in `/home/salespal/narizmart_app/`, and run the first deploy by hand: `bash /home/salespal/narizmart/deploy-cpanel.sh`.
+2. cPanel > Cron Jobs > add (every 5 minutes):
+   `*/5 * * * * /bin/bash /home/salespal/narizmart/deploy-cpanel.sh`
+3. From then on: push to `main` and the site updates within 5 minutes (pull, copy runtime files, pip install if requirements changed, migrate, collectstatic, restart). Log: `/home/salespal/narizmart_data/deploy.log`.
+Run `pytest` locally before pushing: a bad commit would go live automatically. To roll back, `git revert` the commit and push.
