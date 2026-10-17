@@ -1,5 +1,5 @@
 # Runtime dependencies (pinned for reproducible deploys; bump deliberately and let CI prove it)
-Django==5.2.18
+Django==6.1.2
 django-axes==8.3.1
 django-csp==4.0
 django-environ==0.14.0
