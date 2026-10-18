@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture(autouse=True)
 def fresh_rate_limits():
     cache.clear()
-GOOD = {"name": "Md Hasan", "email": "Dr.Has82@Gmail.com", "phone": "01712062236", "order_number": "bm-1a2b3c4d", "message": "Where is my parcel, please check?"}
+GOOD = {"name": "Md Hasan", "email": "Dr.Has82@Gmail.com", "phone": "01712062236", "order_number": "nm-1a2b3c4d", "message": "Where is my parcel, please check?"}
 
 
 def test_form_page_is_empty_and_has_a_roomy_message_box(client):
@@ -24,9 +24,9 @@ def test_submit_saves_emails_and_redirects_to_a_confirmation(client, settings):
     resp = client.post(reverse("core:contact"), GOOD)
     assert resp.status_code == 302 and resp["Location"] == reverse("core:contact_sent")
     msg = ContactMessage.objects.get()
-    assert msg.email == "dr.has82@gmail.com" and msg.order_number == "BM-1A2B3C4D" and msg.message.startswith("Where is")
+    assert msg.email == "dr.has82@gmail.com" and msg.order_number == "NM-1A2B3C4D" and msg.message.startswith("Where is")
     assert len(mail.outbox) == 1 and mail.outbox[0].to == ["hello@example.com"] and mail.outbox[0].reply_to == ["dr.has82@gmail.com"]
-    assert "Where is my parcel" in mail.outbox[0].body and "BM-1A2B3C4D" in mail.outbox[0].subject
+    assert "Where is my parcel" in mail.outbox[0].body and "NM-1A2B3C4D" in mail.outbox[0].subject
     done = client.get(resp["Location"]).content.decode()
     assert "Message sent" in done and "Md Hasan" in done
 

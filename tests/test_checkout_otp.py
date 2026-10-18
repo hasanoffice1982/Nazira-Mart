@@ -75,7 +75,7 @@ def test_confirmation_email_contains_set_password_link_that_works(client, django
     with django_capture_on_commit_callbacks(execute=True):  # the email is sent after the transaction commits
         confirm(client, code_from_mail())
     body = mail.outbox[-1].body
-    assert "Order BM-" in body and "Choose a password" in body
+    assert "Order NM-" in body and "Choose a password" in body
     link = re.search(r"http://testserver(/accounts/password/reset/\S+)", body).group(1)
     client.logout()  # the customer opens the link later, signed out
     page = client.get(link, follow=True)
@@ -178,7 +178,7 @@ def test_verified_customer_skips_the_code(client):
     client.post(reverse("cart:add", args=[p.pk]))
     data = {k: v for k, v in FORM.items() if k != "email"}
     resp = client.post(reverse("orders:checkout"), data)
-    assert Order.objects.get().user == u and resp["Location"].startswith("/orders/BM-")
+    assert Order.objects.get().user == u and resp["Location"].startswith("/orders/NM-")
     assert any("confirmed" in m.subject for m in mail.outbox)  # confirmation email sent
     assert not CheckoutOTP.objects.exists()
 

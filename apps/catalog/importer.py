@@ -33,19 +33,19 @@ HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 DEMO_ROWS = [
     # product with colour + size variants (per-variant stock, one variant with its own price)
-    ["Classic Cotton T-Shirt", "classic-cotton-tshirt", "BM-1001", "Fashion", "Soft everyday tee.", "850", "1050", "NEW DROP", "", "yes", "Black", "#1c3129", "M", "", "", "25"],
+    ["Classic Cotton T-Shirt", "classic-cotton-tshirt", "NM-1001", "Fashion", "Soft everyday tee.", "850", "1050", "NEW DROP", "", "yes", "Black", "#1c3129", "M", "", "", "25"],
     ["Classic Cotton T-Shirt", "classic-cotton-tshirt", "", "", "", "", "", "", "", "", "Black", "#1c3129", "L", "", "", "18"],
     ["Classic Cotton T-Shirt", "classic-cotton-tshirt", "", "", "", "", "", "", "", "", "White", "#f2f2f2", "M", "", "", "30"],
     ["Classic Cotton T-Shirt", "classic-cotton-tshirt", "", "", "", "", "", "", "", "", "White", "#f2f2f2", "XL", "TSHIRT-WHT-XL", "950", "12"],
     # product with sizes only
-    ["Everyday Running Shoes", "everyday-running-shoes", "BM-1002", "Fashion", "Light and breathable.", "3200", "3900", "HOT PICK", "", "yes", "", "", "41", "", "", "10"],
+    ["Everyday Running Shoes", "everyday-running-shoes", "NM-1002", "Fashion", "Light and breathable.", "3200", "3900", "HOT PICK", "", "yes", "", "", "41", "", "", "10"],
     ["Everyday Running Shoes", "everyday-running-shoes", "", "", "", "", "", "", "", "", "", "", "42", "", "", "14"],
     ["Everyday Running Shoes", "everyday-running-shoes", "", "", "", "", "", "", "", "", "", "", "43", "", "", "8"],
     # product with colours only
-    ["Ceramic Coffee Mug", "ceramic-coffee-mug", "BM-1003", "Home", "350 ml glazed mug.", "450", "", "", "", "yes", "Teal", "#3b9189", "", "", "", "40"],
+    ["Ceramic Coffee Mug", "ceramic-coffee-mug", "NM-1003", "Home", "350 ml glazed mug.", "450", "", "", "", "yes", "Teal", "#3b9189", "", "", "", "40"],
     ["Ceramic Coffee Mug", "ceramic-coffee-mug", "", "", "", "", "", "", "", "", "Sand", "#d8c9a6", "", "", "", "35"],
     # simple product without variants (uses the stock column)
-    ["Bamboo Desk Organizer", "bamboo-desk-organizer", "BM-1004", "Home", "Keeps your desk tidy.", "1290", "1590", "", "60", "yes", "", "", "", "", "", "", "", ""],
+    ["Bamboo Desk Organizer", "bamboo-desk-organizer", "NM-1004", "Home", "Keeps your desk tidy.", "1290", "1590", "", "60", "yes", "", "", "", "", "", "", "", ""],
 ]
 
 
@@ -423,7 +423,7 @@ def apply(plan: Plan) -> dict:
             sku = spec.sku
             while not sku or Product.objects.filter(sku=sku).exists():
                 next_number += 1
-                sku = f"BM-{next_number}"
+                sku = f"NM-{next_number}"
             product = Product.objects.create(slug=spec.slug, sku=sku, art_type="bag", **values)
             created += 1
         else:

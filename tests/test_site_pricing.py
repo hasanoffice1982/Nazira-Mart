@@ -262,3 +262,11 @@ def test_shipping_page_shows_the_sub_area_price(client):
     set_prices(delivery_charge_sub=D("95"))
     page = client.get(reverse("core:page", args=["shipping-delivery"])).content.decode()
     assert "sub-area" in page.lower() and "[[" not in page
+
+
+def test_social_handles_become_links_and_the_field_stays_optional(staff_client):
+    resp = admin_post(staff_client, tiktok_url="@narizmart", instagram_url="narizmart")
+    assert resp.status_code == 302
+    s = SiteSettings.load_fresh()
+    assert s.tiktok_url == "https://www.tiktok.com/@narizmart" and s.instagram_url == "https://www.instagram.com/narizmart"
+    assert admin_post(staff_client, tiktok_url="").status_code == 302

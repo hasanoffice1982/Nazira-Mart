@@ -152,12 +152,12 @@ def post_contact(client, **over):
 
 def test_contact_saves_and_emails_support(client, settings):
     settings.SUPPORT_EMAIL = "help@example.com"
-    resp = post_contact(client, order_number="bm-1234", phone="01712345678")
+    resp = post_contact(client, order_number="nm-1234", phone="01712345678")
     assert resp.status_code == 302 and b"Message sent" in client.get(resp["Location"]).content
     msg = ContactMessage.objects.get()
-    assert msg.order_number == "BM-1234"
+    assert msg.order_number == "NM-1234"
     sent = mail.outbox[0]
-    assert sent.to == ["help@example.com"] and sent.reply_to == ["rafi@example.com"] and "BM-1234" in sent.subject
+    assert sent.to == ["help@example.com"] and sent.reply_to == ["rafi@example.com"] and "NM-1234" in sent.subject
 
 
 def test_contact_validation(client):
@@ -185,8 +185,8 @@ def test_contact_survives_mail_failure(client, settings):
 
 def test_contact_prefills_for_signed_in_user(client, user):
     client.force_login(user)
-    html = client.get(reverse("core:contact") + "?order=BM-77").content.decode()
-    assert "buyer@example.com" in html and "BM-77" in html
+    html = client.get(reverse("core:contact") + "?order=NM-77").content.decode()
+    assert "buyer@example.com" in html and "NM-77" in html
 
 
 # ======================= order status emails =======================

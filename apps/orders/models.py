@@ -76,7 +76,7 @@ class Order(models.Model):
 
     @staticmethod
     def new_number() -> str:
-        return "BM-" + uuid.uuid4().hex[:8].upper()
+        return "NM-" + uuid.uuid4().hex[:8].upper()
 
 
 class OrderItem(models.Model):

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load seo %}
+{% block title %}Track your order — NarizMart{% endblock %}
+{% block seo %}{% seo_tags title="Track your order" description="Enter your order number and phone number to see where your NarizMart parcel is." noindex=True %}{% endblock %}
+{% block content %}
+<section class="container section"><div class="checkout-grid"><div class="auth-card">
+<h2>Track your order</h2><p class="muted">Enter the order number and the phone number you used. No account needed.</p>
+<form method="post" novalidate>{% csrf_token %}
+{% include "components/form_fields.html" with form=form %}
+<button class="btn btn-dark btn-full" type="submit">Track order</button></form>
+<p class="muted center" style="margin-top:14px">Signed in? <a href="{% url 'orders:list' %}">See all your orders</a></p></div>
+{% if order %}<div class="auth-card"><h3>Order {{ order.number }}</h3><span class="status status-{{ order.status }}">{{ order.get_status_display }}</span> <span class="muted">· placed {{ order.created_at|date:"d M Y" }}</span>
+<ol class="timeline">{% for h in order.history.all %}<li><b>{{ h.get_status_display }}</b><span>{{ h.created_at|date:"d M Y, h:i A" }}</span></li>{% endfor %}</ol>
+{% for p in parcels %}<p class="muted">Courier{% if p.courier_name %}: <b>{{ p.courier_name }}</b>{% endif %}{% if p.tracking_code %} · tracking <b>{{ p.tracking_code }}</b>{% endif %}{% if p.tracking_link %} · <a href="{{ p.tracking_link }}" target="_blank" rel="noopener noreferrer">Track with the courier</a>{% endif %}</p>{% empty %}{% if order.tracking_number %}<p class="muted">Tracking code: <b>{{ order.tracking_number }}</b></p>{% endif %}{% endfor %}
+<h3>Items</h3>{% include "orders/_summary.html" %}
+<p class="muted">Delivering to {{ order.city }}. Questions? <a href="{% url 'core:contact' %}">Contact us</a>.</p></div>{% endif %}
+</div></section>
+{% endblock %}

@@ -27,6 +27,16 @@ class SiteSettingsForm(forms.ModelForm):
         model = SiteSettings
         fields = "__all__"
 
+    PROFILE_LINKS = (("tiktok_url", "https://www.tiktok.com/@"), ("instagram_url", "https://www.instagram.com/"))
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None:   # turn "@narizmart" into a link BEFORE the URL field validates it
+            data = data.copy()
+            for name, base in self.PROFILE_LINKS:
+                if name in data:
+                    data[name] = self._profile_url(data[name], base)
+        super().__init__(data, *args, **kwargs)
+
     @staticmethod
     def _verification_code(raw: str, label: str) -> str:
         raw = raw.strip()
@@ -42,6 +52,14 @@ class SiteSettingsForm(forms.ModelForm):
 
     def clean_meta_domain_verification(self):
         return self._verification_code(self.cleaned_data["meta_domain_verification"], "Meta")
+
+    @staticmethod
+    def _profile_url(raw: str, base: str) -> str:
+        """Accept a full link, a link without https, or just a handle like @narizmart."""
+        raw = (raw or "").strip()
+        if raw and not raw.startswith(("http://", "https://")) and "." not in raw.split("/")[0] and " " not in raw:
+            return base + raw.lstrip("@/")
+        return raw
 
     def clean_tiktok_domain_verification(self):
         return self._verification_code(self.cleaned_data["tiktok_domain_verification"], "TikTok")

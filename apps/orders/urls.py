@@ -5,6 +5,7 @@ from . import views
 app_name = "orders"
 urlpatterns = [
     path("", views.OrderListView.as_view(), name="list"),
+    path("track/", views.TrackOrderView.as_view(), name="track"),
     path("checkout/", views.CheckoutView.as_view(), name="checkout"),
     path("checkout/coupon/", views.ApplyCouponView.as_view(), name="coupon_apply"),
     path("checkout/coupon/remove/", views.RemoveCouponView.as_view(), name="coupon_remove"),

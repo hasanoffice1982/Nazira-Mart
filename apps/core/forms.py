@@ -33,7 +33,7 @@ class ContactForm(HoneypotMixin):
     name = forms.CharField(max_length=100)
     email = forms.EmailField()
     phone = forms.CharField(max_length=20, required=False, label="Phone (optional)")
-    order_number = forms.CharField(max_length=20, required=False, label="Order number (optional)", help_text="e.g. BM-1A2B3C4D")
+    order_number = forms.CharField(max_length=20, required=False, label="Order number (optional)", help_text="e.g. NM-1A2B3C4D")
     message = forms.CharField(min_length=10, max_length=2000, widget=forms.Textarea(attrs={"rows": 6}))
 
     def clean_email(self) -> str:

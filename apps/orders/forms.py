@@ -92,3 +92,13 @@ class OTPForm(forms.Form):
         if not code.isdigit():
             raise forms.ValidationError("Enter the 6 digits from the email.")
         return code
+
+
+class TrackOrderForm(HoneypotMixin, forms.Form):
+    """Public order tracking: the order number AND the phone number used on the order, so numbers cannot be guessed."""
+
+    number = forms.CharField(max_length=20, label="Order number", help_text="e.g. NM-20261018-0001 (from your email or the order page)")
+    phone = forms.CharField(max_length=20, label="Phone number on the order", help_text="e.g. 01712345678")
+
+    def clean_number(self):
+        return " ".join(self.cleaned_data["number"].split()).upper()

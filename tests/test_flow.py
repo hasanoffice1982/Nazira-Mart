@@ -162,3 +162,44 @@ def test_staff_cannot_sign_in_to_storefront(client):
 def test_customer_cannot_enter_admin(client, user):
     client.force_login(user)
     assert client.get(reverse("admin:index")).status_code == 302
+
+
+# ---- public order tracking -----------------------------------------------------------------------------------------
+def _placed_order(django_user_model):
+    from apps.catalog.models import Product
+    from apps.orders.services import create_order
+
+    user = django_user_model.objects.create_user("t@example.com", "pass12345!x", email_verified=True)
+    p = Product.objects.get(slug="retro-everyday-sunglasses")
+    return create_order(user=user, lines=[(p.pk, 0, 1)], data=CHECKOUT)
+
+
+def test_track_page_shows_status_with_number_and_phone_without_login(client, django_user_model):
+    order = _placed_order(django_user_model)
+    page = client.get(reverse("orders:track"))
+    assert page.status_code == 200 and "Track your order" in page.content.decode()
+    resp = client.post(reverse("orders:track"), {"number": order.number.lower(), "phone": "+880 1712-345678"})
+    html = resp.content.decode()
+    assert resp.status_code == 200 and order.number in html and "Order placed" in html
+    assert "House 1, Road 2" not in html and html.count("01712345678") == 1   # street address hidden; the phone appears only in the form's example text
+
+
+def test_track_page_rejects_wrong_phone_or_unknown_number_with_the_same_message(client, django_user_model):
+    order = _placed_order(django_user_model)
+    wrong_phone = client.post(reverse("orders:track"), {"number": order.number, "phone": "01999999999"}).content.decode()
+    unknown = client.post(reverse("orders:track"), {"number": "NM-0000", "phone": "01712345678"}).content.decode()
+    assert "couldn&#x27;t find an order" in wrong_phone and "couldn&#x27;t find an order" in unknown
+    assert f"Order {order.number}" not in wrong_phone and "Delivering to" not in wrong_phone
+
+
+def test_track_page_shows_courier_tracking_link_from_the_supplier(client, django_user_model):
+    from apps.supplier.models import SupplierOrder
+
+    order = _placed_order(django_user_model)
+    SupplierOrder.objects.create(order=order, partner_order_id=order.number, state="sent", courier_name="Steadfast", tracking_code="ST-1", tracking_link="https://steadfast.com.bd/track/ST-1")
+    html = client.post(reverse("orders:track"), {"number": order.number, "phone": "01712345678"}).content.decode()
+    assert "Steadfast" in html and 'href="https://steadfast.com.bd/track/ST-1"' in html
+
+
+def test_footer_links_to_the_public_tracking_page(client):
+    assert reverse("orders:track") in client.get("/").content.decode()

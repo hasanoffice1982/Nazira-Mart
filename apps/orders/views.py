@@ -10,7 +10,7 @@ from apps.cart.services import delivery_charge, get_cart
 
 from . import otp as otp_service
 from .checkout import address_data, begin_confirmation, billing_for, save_new_shipping, complete_confirmation, needs_email_confirmation, pending_otp, send_order_confirmation
-from .forms import CheckoutForm, OTPForm
+from .forms import CheckoutForm, OTPForm, TrackOrderForm
 from apps.core.models import SiteSettings
 from apps.core.tracking import lines_event, order_event
 
@@ -182,3 +182,24 @@ class RemoveCouponView(View):
         request.session.pop(COUPON_SESSION_KEY, None)
         messages.info(request, "Coupon removed.")
         return redirect("orders:checkout")
+
+
+def _digits(value: str) -> str:
+    return "".join(ch for ch in value if ch.isdigit())
+
+
+@method_decorator(ratelimit(key="ip", rate="20/h", method="POST", block=True), name="post")
+class TrackOrderView(FormView):
+    """Anyone with the order number and its phone number can see where the parcel is, without signing in."""
+
+    template_name = "orders/track.html"
+    form_class = TrackOrderForm
+
+    def form_valid(self, form):
+        number, phone = form.cleaned_data["number"], _digits(form.cleaned_data["phone"])[-10:]
+        order = Order.objects.filter(number__iexact=number).prefetch_related("items", "history", "supplier_orders").first()
+        if order is None or len(phone) < 7 or _digits(order.phone)[-10:] != phone:
+            form.add_error(None, "We couldn't find an order with that number and phone. Check both and try again, or contact us.")
+            return self.form_invalid(form)
+        parcels = [p for p in order.supplier_orders.all() if p.tracking_code or p.tracking_link]
+        return self.render_to_response(self.get_context_data(form=form, order=order, parcels=parcels))

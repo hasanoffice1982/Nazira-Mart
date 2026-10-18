@@ -62,7 +62,7 @@ def run_import(client, data, **post):
 def test_demo_csv_is_valid_and_imports(staff_client):
     run_import(staff_client, importer.demo_csv().encode())
     tee = Product.objects.get(slug="classic-cotton-tshirt")
-    assert tee.sku == "BM-1001" and tee.has_variants and len(tee.active_variants) == 4
+    assert tee.sku == "NM-1001" and tee.has_variants and len(tee.active_variants) == 4
     xl = ProductVariant.objects.get(sku="TSHIRT-WHT-XL")
     assert xl.price == 950 and xl.stock == 12 and xl.color.name == "White" and xl.size.name == "XL"
     assert Color.objects.get(name="Black").hex_code == "#1c3129"
