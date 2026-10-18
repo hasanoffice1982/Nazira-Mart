@@ -3,7 +3,7 @@
 {% block title %}Track your order — NarizMart{% endblock %}
 {% block seo %}{% seo_tags title="Track your order" description="Enter your order number and phone number to see where your NarizMart parcel is." noindex=True %}{% endblock %}
 {% block content %}
-<section class="container section"><div class="checkout-grid"><div class="auth-card">
+<section class="container section"><div class="checkout-grid"{% if not order %} style="grid-template-columns:minmax(0,520px);justify-content:center"{% endif %}><div class="auth-card">
 <h2>Track your order</h2><p class="muted">Enter the order number and the phone number you used. No account needed.</p>
 <form method="post" novalidate>{% csrf_token %}
 {% include "components/form_fields.html" with form=form %}

@@ -97,7 +97,7 @@ class OTPForm(forms.Form):
 class TrackOrderForm(HoneypotMixin, forms.Form):
     """Public order tracking: the order number AND the phone number used on the order, so numbers cannot be guessed."""
 
-    number = forms.CharField(max_length=20, label="Order number", help_text="e.g. NM-20261018-0001 (from your email or the order page)")
+    number = forms.CharField(max_length=20, label="Order number", help_text="e.g. NM-1A2B3C4D (from your order email or the order page)")
     phone = forms.CharField(max_length=20, label="Phone number on the order", help_text="e.g. 01712345678")
 
     def clean_number(self):
