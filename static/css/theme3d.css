@@ -316,7 +316,7 @@ html,body{overflow-x:clip;max-width:100%}
 .nav-wrap .nav-end{margin-left:6px}
 @media(max-width:1500px){.nav-wrap .nav-end{display:none}}   /* the delivery note is already in the top announcement bar */
 .top-head .head-inner{min-width:0}
-.hero,.category-swiper,.promo-wrap,.promo-swiper,.product-grid,.benefits{max-width:100%}
+.hero,.category-swiper,.promo-wrap,.promo-swiper,.product-grid{max-width:100%}   /* not .benefits: it is also a .container, and this rule made it ignore the boxed page width */
 .nav-wrap .nav-inner{gap:4px}
 .nav-wrap .nav-link{padding:9px 13px}
 
