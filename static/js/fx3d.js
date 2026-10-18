@@ -2,10 +2,8 @@
 (() => {
   const fine = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
   const calm = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  if (calm) return;
-
   const SELECTOR = '.product-card,.category,.benefit,.hero-object';
-  const MAX = 9;
+  const MAX = calm ? 4 : 9;   // gentler tilt when the system asks for reduced motion
 
   function bindTilt(el) {
     if (el.dataset.tilt) return;
@@ -47,7 +45,17 @@
     });
   }
 
+  // the little cart badge bumps when the number changes
+  function watchCart() {
+    const badge = document.getElementById('cartCount');
+    if (!badge || !('MutationObserver' in window)) return;
+    new MutationObserver(() => {
+      badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump');
+    }).observe(badge, { childList: true, characterData: true, subtree: true });
+  }
+
   const start = () => {
+    watchCart();
     scan();
     document.body.addEventListener('htmx:afterSwap', (e) => scan(e.target));
   };

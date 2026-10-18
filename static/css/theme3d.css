@@ -234,9 +234,9 @@ footer:before{content:'';position:absolute;left:0;right:0;top:-8px;height:8px;ba
   .promo,.promo-swiper,.promo-wrap{border-radius:28px}.story-image{height:250px;border-radius:30px}
   footer{border-radius:30px 30px 0 0}.head-inner{height:68px}
 }
-/* reduced motion: stop the decorative looping animations only. Never switch transitions off globally: Swiper waits for the
-   wrapper's transitionend event, so with transition:none the slider locks after the first slide. */
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important}.reveal{opacity:1;transform:none;transition:none}.swiper-wrapper{transition-property:transform}}
+/* reduced motion: stop only the endless looping decorations. Hover effects, sliders and one-shot animations stay (never set
+   transition:none globally: Swiper waits for transitionend and would lock after the first slide). */
+@media(prefers-reduced-motion:reduce){.announcement,.hero-slide:before,.hero-slide:after,.hero-object,.mini-float,.spark,.eye-dot,.hero-stage .stage-circle:after,.promo-illustration svg,.promo-illustration .media-img,.story-image svg{animation:none!important}.reveal{opacity:1;transform:none;transition:none}}
 
 /* ===== hero slideshow: plain Swiper sliding; the artwork keeps its gentle float ===== */
 .hero .hero-controls{z-index:7}
@@ -245,3 +245,38 @@ footer:before{content:'';position:absolute;left:0;right:0;top:-8px;height:8px;ba
 main{padding-bottom:64px}
 .newsletter{margin-bottom:0}
 @media(max-width:600px){main{padding-bottom:40px}}
+
+
+/* ===== micro-interactions ===== */
+/* buttons: light sweep + arrow nudge */
+.btn{position:relative;overflow:hidden}
+.btn:after{content:'';position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.6),transparent);transform:skewX(-20deg);pointer-events:none}
+.btn:hover:after{animation:shine .75s ease}
+@keyframes shine{to{left:140%}}
+.btn [data-icon],.viewall [data-icon]{display:inline-block;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.btn:hover [data-icon],.viewall:hover [data-icon]{transform:translateX(5px)}
+/* logo: a quick friendly wiggle */
+.top-head a:hover .logo{animation:logoWiggle .7s cubic-bezier(.3,1.5,.5,1);filter:drop-shadow(0 6px 10px rgba(242,106,15,.35))}
+@keyframes logoWiggle{0%{transform:rotate(0) scale(1)}25%{transform:rotate(-4deg) scale(1.07)}55%{transform:rotate(3deg) scale(1.05)}80%{transform:rotate(-1.5deg) scale(1.04)}100%{transform:rotate(0) scale(1.04)}}
+/* header icons, nav */
+.head-action:hover .icon-wrap{animation:iconPop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes iconPop{0%{transform:scale(1)}40%{transform:scale(1.28) rotate(-8deg)}100%{transform:scale(1)}}
+.nav-link{transition:transform .25s cubic-bezier(.3,1.6,.5,1),box-shadow .25s,background .2s,color .2s}
+.nav-link:hover{transform:translateY(-3px) scale(1.05)}
+.cart-bump,.head-action .count.bump{animation:cartBump .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes cartBump{0%{transform:scale(1)}35%{transform:scale(1.7) rotate(-12deg)}100%{transform:scale(1)}}
+/* hearts and add buttons */
+.wish.liked{animation:heartPop .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes heartPop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
+.product-add:active,.btn:active,.wish:active{transition-duration:.05s}
+/* categories: the picture hops a little on hover */
+.category:hover .category-visual svg,.category:hover .media-img{animation:hop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes hop{0%{transform:translateY(0)}45%{transform:translateY(-10px) scale(1.12) rotate(-5deg)}100%{transform:translateY(-4px) scale(1.14) rotate(-5deg)}}
+/* product grid: cards appear one after another */
+.product-grid .product-card:nth-child(2){transition-delay:.06s}.product-grid .product-card:nth-child(3){transition-delay:.12s}
+.product-grid .product-card:nth-child(4){transition-delay:.18s}.product-grid .product-card:nth-child(5){transition-delay:.24s}
+.product-grid .product-card:nth-child(6){transition-delay:.3s}
+.tilt.is-tilting{transition-delay:0s}
+/* touch feedback on the phone bar */
+.mobilebar a:active,.mobilebar button:active{transform:scale(.9);transition:transform .08s}
+.mobilebar a,.mobilebar button{transition:transform .2s cubic-bezier(.3,1.6,.5,1)}

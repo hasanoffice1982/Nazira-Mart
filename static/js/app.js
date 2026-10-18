@@ -235,6 +235,7 @@
       pagination: { el: nav.querySelector('.cat-dots'), clickable: true },
       breakpoints: { 600: { slidesPerView: 3.4 }, 820: { slidesPerView: 4.4 }, 1100: { slidesPerView: 5.3, spaceBetween: 16 } },
     });
+    unlockAfterTransition(swiper);
     const sync = () => { nav.hidden = swiper.isLocked; };
     swiper.on('lock', sync); swiper.on('unlock', sync); swiper.on('resize', sync); sync();
   });
