@@ -140,6 +140,18 @@ class Command(BaseCommand):
                 button_label=site.hero_button_primary, button_url="#featured", button2_label=site.hero_button_secondary, button2_url="#categories",
                 art=site.hero_art, proof_text=site.hero_proof_text, float_title="Fresh finds", float_text="Just for you",
             )
+            HeroSlide.objects.create(
+                site=site, position=1, eyebrow="FOR LITTLE ONES", title="Cuddles &", highlight="giggles.",
+                text="Soft toys, learning blocks and happy shoes for the little ones in your life.",
+                button_label="Shop kids & toys", button_url="/shop/?category=toys", button2_label="New arrivals", button2_url="/shop/?sort=new",
+                art="teddy", float_title="Kids' favourites", float_text="Gentle & safe", bg_color="#fff4d6", bg_color2="#ffe0b0",
+            )
+            HeroSlide.objects.create(
+                site=site, position=2, eyebrow="GLOW & STYLE", title="Look good.", highlight="Feel great.",
+                text="Dresses, beauty and jewellery picked for the women who love to sparkle.",
+                button_label="Shop women", button_url="/shop/?category=women", button2_label="Beauty & glow", button2_url="/shop/?category=beauty",
+                art="dress", float_title="New season", float_text="Fresh arrivals", bg_color="#dcf0f3", bg_color2="#bfe3e8",
+            )
         if not PromoBanner.objects.exists():
             PromoBanner.objects.create(
                 site=site, position=0, tag=site.promo_tag, title=site.promo_title, highlight=site.promo_highlight, text=site.promo_text,
