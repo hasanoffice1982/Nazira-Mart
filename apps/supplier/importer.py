@@ -136,16 +136,17 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
             continue
         stock = int(item.get("stock") or 0)
         link = existing.get(sid)
-        if link is None and sid in by_sku:   # same identifier as a CSV-uploaded product: connect them instead of creating a duplicate
+        mine = by_sku.get(sid) or by_sku.get(str(item.get("system_id") or ""))   # CSV SKU may be the supplier's product_id or its numeric system id
+        if link is None and mine is not None:   # connect the CSV-uploaded product instead of creating a duplicate; orders always use product_id
             if not dry_run:
                 link = SupplierProduct.objects.create(
-                    product=by_sku[sid], supplier_product_id=sid, base_price=_dec(item.get("base_price")),
+                    product=mine, supplier_product_id=sid, base_price=_dec(item.get("base_price")),
                     commission=_dec(item.get("partner_commission")), final_price=price, supplier_stock=max(stock, 0),
                 )
                 existing[sid] = link
             report.linked += 1
             if dry_run:
-                report.notes.append(f"{sid} would be linked to existing product {by_sku[sid].name[:50]}")
+                report.notes.append(f"{sid} would be linked to existing product {mine.name[:50]}")
                 continue
         if link:   # refresh price and stock only
             if dry_run:
@@ -201,7 +202,7 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
                 product=product, supplier_product_id=sid, base_price=_dec(item.get("base_price")), commission=_dec(item.get("partner_commission")),
                 final_price=price, supplier_stock=max(stock, 0),
             )
-            create_variants(product, product.description, stock)
+            create_variants(product, product.description, stock, str(item.get("variants") or ""))
         if photos:
             _add_photos(product, item, report)
         report.created += 1
