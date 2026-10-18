@@ -364,3 +364,12 @@ def test_database_rejection_at_confirm_shows_a_message_instead_of_500(staff_clie
     monkeypatch.setattr(importer, "apply", lambda plan: (_ for _ in ()).throw(DataError("value too long")))
     resp = staff_client.post(reverse(CONFIRM), follow=True)
     assert resp.status_code == 200 and b"nothing was saved" in resp.content
+
+
+@pytest.mark.django_db
+def test_variant_skus_stay_unique_for_bangla_colour_names():
+    from apps.catalog.models import Category, Color, Product, ProductVariant
+    cat = Category.objects.create(name="Toys", slug="toys-x", title="Toys")
+    product = Product.objects.create(category=cat, name="Game", slug="game-x", sku="8588", price=900, stock=5)
+    skus = {ProductVariant.objects.create(product=product, color=Color.objects.create(name=name)).sku for name in ("লাল", "নীল", "!!!", "???")}
+    assert len(skus) == 4

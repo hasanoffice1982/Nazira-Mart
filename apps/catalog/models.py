@@ -248,8 +248,13 @@ class ProductVariant(models.Model):
         return self.price if self.price is not None else self.product.price
 
     def build_sku(self) -> str:
-        parts = [self.product.sku] + [slugify(x.name).upper() for x in (self.color, self.size) if x]
-        return "-".join(parts)[:60]
+        parts = [self.product.sku] + [slugify(x.name, allow_unicode=True).upper() for x in (self.color, self.size) if x]   # unicode: Bangla names must not collapse to nothing
+        base = "-".join(p for p in parts if p)[:56]
+        sku, n = base[:60], 1
+        while ProductVariant.objects.filter(sku=sku).exclude(pk=self.pk).exists():   # never collide with another variant's SKU
+            n += 1
+            sku = f"{base}-{n}"
+        return sku
 
     def save(self, *args, **kwargs):
         if not self.sku:
