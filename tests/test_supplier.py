@@ -315,3 +315,9 @@ def test_sync_links_csv_uploaded_product_by_sku_instead_of_duplicating(settings)
     importer.sync(items=[item], photos=False)
     mine.refresh_from_db()
     assert Product.objects.count() == 1 and mine.supplier_link.supplier_product_id == "8971" and mine.stock == 7
+
+
+def test_colour_parser_ignores_descriptive_text():
+    from apps.supplier.variants import parse_colors
+    assert parse_colors("প্রধান রঙ: উজ্জ্বল লাল এর সাথে সোনালী 👉 স্টাইলিশ") == []
+    assert parse_colors("Color: Pink, Sky Blue, Whatever") == ["Pink", "Sky Blue"]

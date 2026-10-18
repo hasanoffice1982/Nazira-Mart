@@ -32,9 +32,17 @@ def parse_sizes(description: str) -> list[str]:
     return []
 
 
+KNOWN_COLORS = {
+    "red", "blue", "green", "black", "white", "pink", "yellow", "orange", "purple", "violet", "brown", "grey", "gray", "navy",
+    "maroon", "cream", "beige", "gold", "golden", "silver", "sky blue", "off white", "off-white", "teal", "mint", "peach", "lavender",
+    "লাল", "নীল", "সবুজ", "কালো", "সাদা", "গোলাপি", "হলুদ", "কমলা", "বেগুনি", "বাদামি", "ধূসর", "মেরুন", "অফ হোয়াইট",
+}
+
+
 def parse_colors(description: str) -> list[str]:
+    """Only well-known colour names count: Bangla descriptions contain many 'রঙ' sentences that are not option lists."""
     for found in COLOR_RE.finditer(description or ""):
-        tokens = [t.title() for t in _split(found.group(1)) if 2 <= len(t) <= 20 and not re.search(r"\d", t)]
+        tokens = [t.title() for t in _split(found.group(1)) if t.lower() in KNOWN_COLORS]
         if tokens:
             return list(dict.fromkeys(tokens))[:MAX_OPTIONS]
     return []
