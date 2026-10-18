@@ -34,7 +34,8 @@ find "$APP" -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 cp manage.py passenger_wsgi.py requirements-cpanel.txt "$APP/"
 
 # the Python App's virtualenv (cPanel puts it under ~/virtualenv/<app root>/<python version>/)
-VENV=$(ls -d /home/salespal/virtualenv/narizmart_app/*/bin/activate | head -1)
+PYVER=$(cat /home/salespal/narizmart_data/pyver 2>/dev/null || echo 3.12)   # must match the Python version chosen in Setup Python App
+VENV=/home/salespal/virtualenv/narizmart_app/$PYVER/bin/activate
 # shellcheck disable=SC1090
 source "$VENV"
 cd "$APP"
@@ -45,5 +46,6 @@ python manage.py migrate --noinput
 python manage.py collectstatic --noinput --verbosity 0
 
 echo "$NEW" > .deployed
+python manage.py check >/dev/null || { echo "ERROR: manage.py check failed, not restarting"; exit 1; }
 touch tmp/restart.txt                            # Passenger restarts the app on the next request
 echo "== done $NEW"
