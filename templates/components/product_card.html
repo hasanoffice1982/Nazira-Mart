@@ -1,4 +1,4 @@
-<article class="product-card"><div class="product-visual" style="background:{{ p.bg_color }}"><button type="button" class="qv-hit" hx-get="{% url 'catalog:quick' p.slug %}" hx-target="#quickBody" hx-swap="innerHTML" aria-label="Quick view {{ p.name }}"></button>
+<article class="product-card"><div class="product-visual" style="background:{{ p.card_bg }}"><button type="button" class="qv-hit" hx-get="{% url 'catalog:quick' p.slug %}" hx-target="#quickBody" hx-swap="innerHTML" aria-label="Quick view {{ p.name }}"></button>
 {% if p.badge %}<span class="product-badge {% if p.badge_is_discount %}discount{% endif %}">{{ p.badge }}</span>{% endif %}
 {% include "wishlist/_button.html" with product=p liked=False %}
 {% include "components/media.html" with image=p.cover_image art=p.art_type alt=p.name %}

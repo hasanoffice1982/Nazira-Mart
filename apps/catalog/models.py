@@ -56,6 +56,15 @@ class Category(models.Model):
         return self.name
 
 
+DEFAULT_PRODUCT_BG = "#f4f7f3"
+# Product picture background follows the category unless a product sets its own color (Media & look > Custom background)
+CATEGORY_TINTS = {
+    "women": "#dcf0f3", "bags": "#ffeedd", "shoes": "#fbe9d8", "beauty": "#e6f2f7",
+    "jewellery": "#fff6d9", "toys": "#fff1cc", "kids": "#e1f4ff",
+}
+FALLBACK_TINTS = ("#dcf0f3", "#ffeedd", "#e1f4ff", "#fff6d9", "#e6f2f7", "#fbe9d8")
+
+
 class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
     name = models.CharField(max_length=255)
@@ -79,6 +88,14 @@ class Product(models.Model):
     class Meta:
         ordering = ("-created_at", "id")
         indexes = [models.Index(fields=["is_active", "category"])]
+
+    @property
+    def card_bg(self) -> str:
+        """Background color behind the product picture: its own color if set, otherwise its category's soft tint."""
+        if self.bg_color and self.bg_color.lower() != DEFAULT_PRODUCT_BG:
+            return self.bg_color
+        category = self.category
+        return CATEGORY_TINTS.get(category.slug) or FALLBACK_TINTS[category.pk % len(FALLBACK_TINTS)]
 
     def __str__(self) -> str:
         return self.name

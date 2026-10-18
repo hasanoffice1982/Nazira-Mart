@@ -1,4 +1,4 @@
-{% load images richtext %}<div class="modal-grid"><div class="modal-art-wrap"><div class="gallery" data-gallery style="background:{{ product.bg_color }}">
+{% load images richtext %}<div class="modal-grid"><div class="modal-art-wrap"><div class="gallery" data-gallery style="background:{{ product.card_bg }}">
 <div class="gallery-main">
 <div class="swiper gallery-swiper" data-gallery-swiper hidden><div class="swiper-wrapper"></div><div class="swiper-button-prev" aria-label="Previous photo"></div><div class="swiper-button-next" aria-label="Next photo"></div><div class="swiper-pagination"></div></div>
 <div class="gallery-single" data-gallery-single>{% with cover=product.cover_image %}{% if cover %}{% responsive_img cover alt=product.name sizes="(max-width: 800px) 100vw, 600px" eager=True %}{% else %}{% include "components/media.html" with image=None art=product.art_type alt=product.name %}{% endif %}{% endwith %}</div></div>
