@@ -196,11 +196,11 @@ def test_no_slides_means_no_banner_section(client):
 def test_seed_gives_a_brand_new_shop_a_first_slide():
     assert not HeroSlide.objects.exists()
     call_command("seed_catalog", dataset="test")
-    assert HeroSlide.objects.count() == 3   # a starter slideshow: ladies, kids, beauty
+    assert HeroSlide.objects.count() == 5   # a starter slideshow of five
     first = HeroSlide.objects.first()
     assert first.title == "Pretty things." and first.button_url == "#featured"
     call_command("seed_catalog", dataset="test")
-    assert HeroSlide.objects.count() == 3
+    assert HeroSlide.objects.count() == 5
 
 
 def test_custom_background_and_text_color_are_applied(client):

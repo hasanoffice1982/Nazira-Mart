@@ -152,6 +152,18 @@ class Command(BaseCommand):
                 button_label="Shop women", button_url="/shop/?category=women", button2_label="Beauty & glow", button2_url="/shop/?category=beauty",
                 art="dress", float_title="New season", float_text="Fresh arrivals", bg_color="#dcf0f3", bg_color2="#bfe3e8",
             )
+            HeroSlide.objects.create(
+                site=site, position=3, eyebrow="STEP OUT IN STYLE", title="Heels, bags &", highlight="more.",
+                text="Pretty bags and party shoes to finish every look.",
+                button_label="Shop bags", button_url="/shop/?category=bags", button2_label="Heels & shoes", button2_url="/shop/?category=shoes",
+                art="heels", float_title="Party ready", float_text="Dress up", bg_color="#ffeedd", bg_color2="#ffd9b8",
+            )
+            HeroSlide.objects.create(
+                site=site, position=4, eyebrow="LITTLE TREASURES", title="Play, learn", highlight="& grow.",
+                text="Colourful blocks and happy sneakers that make every day an adventure.",
+                button_label="Shop toys", button_url="/shop/?category=toys", button2_label="Kids fashion", button2_url="/shop/?category=kids",
+                art="blocks", float_title="Fun & safe", float_text="Kid approved", bg_color="#e1f4ff", bg_color2="#bfe3f5",
+            )
         if not PromoBanner.objects.exists():
             PromoBanner.objects.create(
                 site=site, position=0, tag=site.promo_tag, title=site.promo_title, highlight=site.promo_highlight, text=site.promo_text,

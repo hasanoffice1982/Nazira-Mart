@@ -236,21 +236,8 @@ footer:before{content:'';position:absolute;left:0;right:0;top:-8px;height:8px;ba
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 
-/* ===== hero slideshow: soft cross-fade, the artwork turns in with a 3D entrance, text rises in order ===== */
-.hero .swiper-slide{opacity:0!important;pointer-events:none}
-.hero .swiper-slide-active{opacity:1!important;pointer-events:auto}
-.hero .hero-swiper:not(.swiper-initialized) .swiper-slide:first-child{opacity:1!important;pointer-events:auto}
-.hero .swiper-slide-active .eyebrow,.hero .swiper-slide-active h1,.hero .swiper-slide-active h2.hero-title,.hero .swiper-slide-active .hero-text .rich,.hero .swiper-slide-active .button-row,.hero .swiper-slide-active .hero-proof{animation:heroRise .8s cubic-bezier(.2,.9,.3,1) both}
-.hero .swiper-slide-active h1,.hero .swiper-slide-active h2.hero-title{animation-delay:.08s}
-.hero .swiper-slide-active .hero-text .rich{animation-delay:.16s}
-.hero .swiper-slide-active .button-row{animation-delay:.24s}
-.hero .swiper-slide-active .hero-proof{animation-delay:.32s}
-@keyframes heroRise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
-.hero .swiper-slide-active .hero-stage{animation:heroStage 1s cubic-bezier(.2,.9,.3,1) both}
-@keyframes heroStage{from{opacity:0;transform:perspective(900px) rotateY(-28deg) translateX(60px) scale(.86)}to{opacity:1;transform:perspective(900px) rotateY(0) translateX(0) scale(1)}}
+/* ===== hero slideshow: plain Swiper sliding; the artwork keeps its gentle float ===== */
 .hero .hero-controls{z-index:7}
-.hero .swiper-slide{--slide-tint:transparent}
-@media(prefers-reduced-motion:reduce){.hero .swiper-slide-active *{animation:none!important}}
 
 /* ===== breathing room above the footer on every inner page ===== */
 main{padding-bottom:64px}

@@ -195,8 +195,7 @@
     if (slides < 2 || typeof Swiper === 'undefined') return;
     const seconds = parseInt(hero.dataset.seconds, 10) || 0;
     const swiper = new Swiper(el, {
-      loop: true, speed: 900, grabCursor: true, a11y: { enabled: true },
-      effect: 'fade', fadeEffect: { crossFade: true },
+      loop: true, speed: 700, grabCursor: true, a11y: { enabled: true },
       autoplay: seconds > 0 ? { delay: seconds * 1000, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
       navigation: { nextEl: el.querySelector('.hero-next'), prevEl: el.querySelector('.hero-prev') },
       pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
