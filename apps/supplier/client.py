@@ -56,8 +56,19 @@ def balance() -> dict:
     return call("GET", settings.SUPPLIER_PATH_BALANCE).get("data", {})
 
 
-def products() -> list[dict]:
-    return call("GET", settings.SUPPLIER_PATH_PRODUCTS).get("data", [])
+MAX_PAGES = 60   # the catalogue is paginated (50 items per page); this only guards against a runaway loop
+
+
+def products(max_pages: int = MAX_PAGES) -> list[dict]:
+    """Every catalogue item, following ?page=N until the supplier says there are no more pages."""
+    items: list[dict] = []
+    sep = "&" if "?" in settings.SUPPLIER_PATH_PRODUCTS else "?"
+    for page in range(1, max_pages + 1):
+        reply = call("GET", f"{settings.SUPPLIER_PATH_PRODUCTS}{sep}page={page}")
+        items.extend(reply.get("data") or [])
+        if not (reply.get("pagination") or {}).get("has_more_pages"):
+            break
+    return items
 
 
 def place_order(payload: dict) -> dict:

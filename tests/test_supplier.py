@@ -219,7 +219,7 @@ def test_retry_resends_failed_parcels(order, monkeypatch):
 @override_settings(SUPPLIER_SYNC_INCLUDE="", **KEYS)
 def test_cron_without_an_include_list_only_refreshes(monkeypatch, capsys):
     call_command("seed_catalog")
-    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": ITEMS} if p == "/products" else {"data": {"current_balance": 9000, "minimum_required": 200, "currency": "BDT"}})
+    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": ITEMS} if p.startswith("/products") else {"data": {"current_balance": 9000, "minimum_required": 200, "currency": "BDT"}})
     before = Product.objects.count()
     call_command("supplier_cron")
     assert Product.objects.count() == before
@@ -229,7 +229,7 @@ def test_cron_without_an_include_list_only_refreshes(monkeypatch, capsys):
 def test_cron_with_an_include_list_imports_and_activates(monkeypatch):
     call_command("seed_catalog")
     monkeypatch.setattr(importer, "_add_photos", lambda *a, **k: None)
-    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": ITEMS} if p == "/products" else {"data": {"current_balance": 9000, "minimum_required": 200}})
+    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": ITEMS} if p.startswith("/products") else {"data": {"current_balance": 9000, "minimum_required": 200}})
     call_command("supplier_cron")
     assert Product.objects.filter(sku__in=["VND-1", "VND-2"], is_active=True).count() == 2
 
@@ -321,3 +321,23 @@ def test_colour_parser_ignores_descriptive_text():
     from apps.supplier.variants import parse_colors
     assert parse_colors("প্রধান রঙ: উজ্জ্বল লাল এর সাথে সোনালী 👉 স্টাইলিশ") == []
     assert parse_colors("Color: Pink, Sky Blue, Whatever") == ["Pink", "Sky Blue"]
+
+
+def test_variant_field_parser_and_pagination(monkeypatch):
+    from apps.supplier.variants import parse_variant_field
+    assert parse_variant_field("Color: Black, White | Size: m, L | Dial: 44mm") == (["M", "L"], ["Black", "White"])
+    assert parse_variant_field("Color: Black | Dial: 44mm") == ([], ["Black"])
+    pages = {1: {"data": [{"product_id": "A"}], "pagination": {"has_more_pages": True}}, 2: {"data": [{"product_id": "B"}], "pagination": {"has_more_pages": False}}}
+    seen = []
+    monkeypatch.setattr(client, "call", lambda method, path, payload=None: (seen.append(path), pages[int(path.rsplit("=", 1)[1])])[1])
+    assert [i["product_id"] for i in client.products()] == ["A", "B"] and len(seen) == 2
+
+
+@pytest.mark.django_db
+def test_sync_links_by_numeric_system_id_but_orders_use_product_id():
+    from apps.catalog.models import Category
+    cat = Category.objects.create(name="Kids", slug="kids2", title="Kids")
+    mine = Product.objects.create(category=cat, name="Frock", slug="frock-8971", sku="8971", price=1299, stock=0, is_active=True)
+    importer.sync(items=[{"product_id": "VND-8971", "system_id": 8971, "title": "Kids Frock", "final_selling_price": 1299, "base_price": 666, "stock": 3, "is_active": 1}], photos=False)
+    mine.refresh_from_db()
+    assert Product.objects.count() == 1 and mine.supplier_link.supplier_product_id == "VND-8971"

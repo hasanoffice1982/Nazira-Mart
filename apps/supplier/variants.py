@@ -48,10 +48,26 @@ def parse_colors(description: str) -> list[str]:
     return []
 
 
+def parse_variant_field(text: str) -> tuple[list[str], list[str]]:
+    """The API's structured field, e.g. "Color: Black, White | Size: M, L | Dial: 44mm". Only colour and size options are used."""
+    sizes: list[str] = []
+    colors: list[str] = []
+    for part in str(text or "").split("|"):
+        key, _, values = part.partition(":")
+        key, options = key.strip().lower(), _split(values)
+        if key in ("color", "colour", "রঙ", "কালার"):
+            colors += [o.title() for o in options if 2 <= len(o) <= 20]
+        elif key in ("size", "সাইজ"):
+            sizes += [o.upper() if not o.isdigit() else o for o in options if len(o) <= 20]
+    return list(dict.fromkeys(sizes))[:MAX_OPTIONS], list(dict.fromkeys(colors))[:MAX_OPTIONS]
+
+
 @transaction.atomic
-def create_variants(product, description: str, stock: int) -> int:
-    """Create one variant per colour x size found in the description. Returns how many were created."""
-    sizes, colors = parse_sizes(description), parse_colors(description)
+def create_variants(product, description: str, stock: int, variants_text: str = "") -> int:
+    """Create one variant per colour x size. The API's variants field wins; otherwise the description is searched. Returns how many were created."""
+    sizes, colors = parse_variant_field(variants_text)
+    if not sizes and not colors:
+        sizes, colors = parse_sizes(description), parse_colors(description)
     if not sizes and not colors:
         return 0
     size_objs = [Size.objects.get_or_create(name=s, defaults={"position": n})[0] for n, s in enumerate(sizes)]
