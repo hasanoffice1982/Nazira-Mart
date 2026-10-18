@@ -11,6 +11,7 @@ LOCK=/home/salespal/narizmart_data/deploy.lock
 
 mkdir -p "$(dirname "$LOG")" "$APP/tmp"
 exec 9>"$LOCK"; flock -n 9 || exit 0          # never run two deploys at once
+[ -f "$LOG" ] && [ "$(wc -l <"$LOG")" -gt 1000 ] && tail -n 500 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"   # keep the log short
 exec >>"$LOG" 2>&1
 
 cd "$CLONE"
