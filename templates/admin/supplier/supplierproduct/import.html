@@ -43,6 +43,7 @@
         <p class="mb-2"><span class="badge badge-info">seen {{ report.seen }}</span>
           <span class="badge badge-success">new {{ report.created }}</span>
           <span class="badge badge-primary">refreshed {{ report.updated }}</span>
+          <span class="badge badge-warning">linked {{ report.linked }}</span>
           <span class="badge badge-secondary">skipped {{ report.skipped }}</span>
           <span class="badge badge-light border">photos {{ report.images }}</span></p>
         {% if report.notes %}<ul class="list-unstyled small mb-0">{% for line in report.notes %}<li class="border-bottom py-1">{{ line }}</li>{% endfor %}</ul>{% endif %}

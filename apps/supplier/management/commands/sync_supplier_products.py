@@ -27,5 +27,5 @@ class Command(BaseCommand):
         for line in report.notes[:60]:
             self.stdout.write("  " + line)
         self.stdout.write(self.style.SUCCESS(
-            f"{'DRY RUN: ' if o['dry_run'] else ''}seen {report.seen}, new {report.created}, refreshed {report.updated}, skipped {report.skipped}, photos {report.images}"
+            f"{'DRY RUN: ' if o['dry_run'] else ''}seen {report.seen}, new {report.created}, refreshed {report.updated}, linked {report.linked}, skipped {report.skipped}, photos {report.images}"
         ))
