@@ -1,19 +1,55 @@
 {% extends "admin/base_site.html" %}
 {% block breadcrumbs %}{% endblock %}
 {% block content %}
-<div id="content-main" style="max-width:720px">
-  <p>Pull products from the supplier catalogue. New products are created <strong>hidden</strong> so you can review them; existing ones only get a fresh price and stock.
-     Tick <em>Preview only</em> first to see what would be imported without changing anything.</p>
-  <form method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <p><input type="submit" value="Run" class="default"> <a href="{% url 'admin:supplier_supplierproduct_changelist' %}">Back</a></p>
-  </form>
-  {% if report %}
-    <h2>Result</h2>
-    <p><strong>{% if dry_run %}Preview: {% endif %}seen {{ report.seen }}, new {{ report.created }}, refreshed {{ report.updated }}, skipped {{ report.skipped }}, photos {{ report.images }}</strong></p>
-    {% if report.notes %}<pre style="white-space:pre-wrap">{% for line in report.notes %}{{ line }}
-{% endfor %}</pre>{% endif %}
-  {% endif %}
-  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card card-primary card-outline">
+      <div class="card-header"><h3 class="card-title">Import products from the supplier</h3></div>
+      <form method="post" novalidate>{% csrf_token %}
+        <div class="card-body">
+          <p class="text-muted">New products are created <strong>hidden</strong> so you can review them. Existing ones only get a fresh price and stock. Start with <strong>Preview only</strong> ticked to see the list without changing anything.</p>
+          {% if form.errors %}<div class="alert alert-danger">Please fix the highlighted fields.</div>{% endif %}
+          {% for f in form.visible_fields %}
+            {% if f.field.widget.input_type == "checkbox" %}
+              <div class="form-group">
+                <div class="custom-control custom-switch">
+                  {{ f }}<label class="custom-control-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+                </div>
+                <small class="form-text text-muted">{{ f.help_text }}</small>
+              </div>
+            {% else %}
+              <div class="form-group">
+                <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+                {{ f }}
+                <small class="form-text text-muted">{{ f.help_text }}</small>
+                {% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-cloud-download-alt"></i> Run</button>
+          <a href="{% url 'admin:supplier_supplierproduct_changelist' %}" class="btn btn-default ml-2">Back</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if error %}<div class="alert alert-danger"><h5><i class="icon fas fa-ban"></i> Could not reach the supplier</h5>{{ error }}</div>{% endif %}
+    {% if report %}
+    <div class="card {% if dry_run %}card-warning{% else %}card-success{% endif %} card-outline">
+      <div class="card-header"><h3 class="card-title">{% if dry_run %}Preview (nothing changed){% else %}Import finished{% endif %}</h3></div>
+      <div class="card-body">
+        <p class="mb-2"><span class="badge badge-info">seen {{ report.seen }}</span>
+          <span class="badge badge-success">new {{ report.created }}</span>
+          <span class="badge badge-primary">refreshed {{ report.updated }}</span>
+          <span class="badge badge-secondary">skipped {{ report.skipped }}</span>
+          <span class="badge badge-light border">photos {{ report.images }}</span></p>
+        {% if report.notes %}<ul class="list-unstyled small mb-0">{% for line in report.notes %}<li class="border-bottom py-1">{{ line }}</li>{% endfor %}</ul>{% endif %}
+        {% if not dry_run and report.created %}<p class="mt-3 mb-0">New products are hidden. Open <a href="{% url 'admin:catalog_product_changelist' %}?is_active__exact=0">Products (hidden)</a>, check them, then tick Active.</p>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
