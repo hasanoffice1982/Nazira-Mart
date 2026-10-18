@@ -318,6 +318,7 @@ SUPPLIER_API_KEY = env("SUPPLIER_API_KEY", default="")
 SUPPLIER_API_SECRET = env("SUPPLIER_API_SECRET", default="")
 SUPPLIER_WEBHOOK_TOKEN = env("SUPPLIER_WEBHOOK_TOKEN", default="")   # secret part of the webhook URL: /supplier/webhook/<token>/
 SUPPLIER_AUTO_SEND = env.bool("SUPPLIER_AUTO_SEND", default=False)   # send the order when staff mark it Confirmed
+SUPPLIER_VARIANT_MODE = env("SUPPLIER_VARIANT_MODE", default="manual")   # "manual": variant orders are placed by hand; "address_note": size/colour is appended to the address line
 SUPPLIER_SEND_QUANTITY = env.bool("SUPPLIER_SEND_QUANTITY", default=False)  # only if the supplier API accepts a quantity field
 SUPPLIER_TIMEOUT = env.int("SUPPLIER_TIMEOUT", default=20)
 # Paths are overridable because the public docs show only /balance explicitly (check with `manage.py supplier_check`)

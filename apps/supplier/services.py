@@ -26,11 +26,14 @@ def postal_code(order: Order) -> str:
     return found.group(1) if found else ("1000" if order.delivery_area in ("dhaka", "sub") else "0000")
 
 
-def build_payload(order: Order, partner_id: str, supplier_product_id: str, quantity: int) -> dict:
+def build_payload(order: Order, partner_id: str, supplier_product_id: str, quantity: int, variant_label: str = "") -> dict:
+    address = f"{order.address}, {order.city}"
+    if variant_label and settings.SUPPLIER_VARIANT_MODE == "address_note":   # the API has no variant field, so the choice rides in the address line
+        address = f"{address} [{variant_label}]"
     payload = {
         "partner_order_id": partner_id, "product_id": supplier_product_id,
         "customer_name": order.full_name, "customer_phone": order.phone,
-        "customer_address": f"{order.address}, {order.city}"[:255], "postal_code": postal_code(order),
+        "customer_address": address[:255], "postal_code": postal_code(order),
         "city_or_zone": ZONES.get(order.delivery_area, "Outside Dhaka"), "payment_method": "Cash on Delivery",
     }
     if quantity > 1 and settings.SUPPLIER_SEND_QUANTITY:
@@ -53,8 +56,13 @@ def send_order(order: Order) -> list[SupplierOrder]:
             parcel.save()
             results.append(parcel)
             continue
+        if item.variant_label and settings.SUPPLIER_VARIANT_MODE != "address_note":
+            parcel.state, parcel.error = SupplierOrder.State.MANUAL, f"Customer chose {item.variant_label}: place this order by hand in the supplier panel with that option."
+            parcel.save()
+            results.append(parcel)
+            continue
         try:
-            reply = client.place_order(build_payload(order, partner_id, item.product.supplier_link.supplier_product_id, item.quantity))
+            reply = client.place_order(build_payload(order, partner_id, item.product.supplier_link.supplier_product_id, item.quantity, item.variant_label))
         except client.SupplierError as exc:
             parcel.state, parcel.error = SupplierOrder.State.FAILED, str(exc)[:300]
         else:

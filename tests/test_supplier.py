@@ -243,3 +243,36 @@ def test_low_balance_sends_one_alert_email(monkeypatch, mailoutbox):
     call_command("supplier_cron")
     call_command("supplier_cron")
     assert len(mailoutbox) == 1 and "wallet is low" in mailoutbox[0].subject
+
+
+class TestVariants:
+    def test_parses_bangla_size_list(self):
+        from apps.supplier.variants import parse_colors, parse_sizes
+        text = "সাইজ ও বয়স (Size & Age Guide):সাইজ (Size): ১৬, ১৮, ২০, ২২বয়স (Age Group): ১ থেকে ১০ বছর। Color: Pink, Sky Blue"
+        assert parse_sizes(text) == ["16", "18", "20", "22"]
+        assert parse_colors(text) == ["Pink", "Sky Blue"]
+        assert parse_sizes("Soft cotton hoodie") == [] and parse_colors("Soft cotton hoodie") == []
+
+    @pytest.mark.django_db
+    def test_import_creates_variants_and_variant_order_goes_manual(self, settings):
+        from apps.catalog.models import Product
+        from apps.supplier import importer
+        item = {"product_id": "9001", "title": "Kids frock", "description": "Size: 16, 18\nColor: Pink, Blue", "final_selling_price": 666, "base_price": 500, "stock": 5, "is_active": 1}
+        importer.sync(items=[item], photos=False, only_known_category=False, activate=True)
+        product = Product.objects.get(sku="9001")
+        assert product.variants.count() == 4
+        importer.sync(items=[{**item, "stock": 2}], photos=False)
+        assert set(product.variants.values_list("stock", flat=True)) == {2}
+
+
+@override_settings(**KEYS)
+def test_variant_item_goes_manual_by_default_and_into_address_in_note_mode(order, calls):
+    item = order.items.get()
+    item.variant_label = "Pink / 18"
+    item.save()
+    parcel = services.send_order(order)[0]
+    assert parcel.state == "manual" and "Pink / 18" in parcel.error and not calls
+    parcel.delete()
+    with override_settings(SUPPLIER_VARIANT_MODE="address_note"):
+        assert services.send_order(order)[0].state == "sent"
+    assert calls[0][2]["customer_address"].endswith("[Pink / 18]")
