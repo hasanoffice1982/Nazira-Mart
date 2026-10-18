@@ -45,6 +45,7 @@ class Report:
     seen: int = 0
     created: int = 0
     updated: int = 0
+    linked: int = 0
     skipped: int = 0
     images: int = 0
     notes: list[str] = field(default_factory=list)
@@ -124,6 +125,7 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
     exc = re.compile(exclude, re.I) if exclude else None
     existing = {sp.supplier_product_id: sp for sp in SupplierProduct.objects.select_related("product")}
     categories = {c.slug: c for c in Category.objects.all()}
+    by_sku = {p.sku: p for p in Product.objects.filter(supplier_link__isnull=True).exclude(sku="")}   # products uploaded by CSV, SKU = supplier product id
     for item in catalog:
         sid = str(item.get("product_id") or "").strip()
         title = str(item.get("title") or "").strip()
@@ -134,6 +136,17 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
             continue
         stock = int(item.get("stock") or 0)
         link = existing.get(sid)
+        if link is None and sid in by_sku:   # same identifier as a CSV-uploaded product: connect them instead of creating a duplicate
+            if not dry_run:
+                link = SupplierProduct.objects.create(
+                    product=by_sku[sid], supplier_product_id=sid, base_price=_dec(item.get("base_price")),
+                    commission=_dec(item.get("partner_commission")), final_price=price, supplier_stock=max(stock, 0),
+                )
+                existing[sid] = link
+            report.linked += 1
+            if dry_run:
+                report.notes.append(f"{sid} would be linked to existing product {by_sku[sid].name[:50]}")
+                continue
         if link:   # refresh price and stock only
             if dry_run:
                 report.updated += 1

@@ -304,3 +304,20 @@ def test_admin_import_page_previews_and_creates(client, django_user_model, monke
     assert b"Preview" in r.content and not Product.objects.filter(sku="7001").exists()
     client.post(url, {"limit": 10, "include": "frock"})
     assert Product.objects.get(sku="7001").variants.count() == 2
+
+
+@pytest.mark.django_db
+def test_sync_links_csv_uploaded_product_by_sku_instead_of_duplicating(settings):
+    from apps.catalog.models import Category
+    cat = Category.objects.create(name="Kids", slug="kids", title="Kids")
+    mine = Product.objects.create(category=cat, name="Frock", slug="frock-8971", sku="8971", price=1299, stock=0, is_active=True)
+    item = {"product_id": "8971", "title": "Premium Floral Cotton Kids Frock", "final_selling_price": 1299, "base_price": 666, "stock": 7, "is_active": 1}
+    importer.sync(items=[item], photos=False)
+    mine.refresh_from_db()
+    assert Product.objects.count() == 1 and mine.supplier_link.supplier_product_id == "8971" and mine.stock == 7
+
+
+def test_colour_parser_ignores_descriptive_text():
+    from apps.supplier.variants import parse_colors
+    assert parse_colors("প্রধান রঙ: উজ্জ্বল লাল এর সাথে সোনালী 👉 স্টাইলিশ") == []
+    assert parse_colors("Color: Pink, Sky Blue, Whatever") == ["Pink", "Sky Blue"]
