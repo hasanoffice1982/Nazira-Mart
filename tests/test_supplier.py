@@ -287,7 +287,6 @@ def test_admin_order_list_has_no_date_hierarchy():
 
 @pytest.mark.django_db
 def test_admin_import_page_previews_and_creates(client, django_user_model, monkeypatch, settings):
-    from django.test import override_settings
     admin = django_user_model.objects.create_superuser("adm@example.com", "pass12345!x")
     admin.email_verified = True
     admin.save()
