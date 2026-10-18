@@ -364,3 +364,28 @@ def test_database_rejection_at_confirm_shows_a_message_instead_of_500(staff_clie
     monkeypatch.setattr(importer, "apply", lambda plan: (_ for _ in ()).throw(DataError("value too long")))
     resp = staff_client.post(reverse(CONFIRM), follow=True)
     assert resp.status_code == 200 and b"nothing was saved" in resp.content
+
+
+@pytest.mark.django_db
+def test_import_photos_command_attaches_from_zip_and_skips_done(tmp_path):
+    import zipfile
+    from io import BytesIO
+
+    from django.core.management import call_command
+    from PIL import Image
+
+    from apps.catalog.models import Category, Product
+
+    cat = Category.objects.create(name="Kids", slug="kids", title="Kids")
+    product = Product.objects.create(category=cat, name="Frock", slug="frock", sku="9001", price=999, stock=5)
+    csv_path = tmp_path / "p.csv"
+    csv_path.write_text("name,slug,sku,category,price,stock,images\nFrock,frock,9001,Kids,999,5,frock-1.png\n", encoding="utf-8")
+    buf = BytesIO()
+    Image.new("RGBA", (40, 40), (255, 0, 0, 255)).save(buf, "PNG")
+    zpath = tmp_path / "p.zip"
+    with zipfile.ZipFile(zpath, "w") as z:
+        z.writestr("frock-1.png", buf.getvalue())
+    call_command("import_photos", csv=str(csv_path), zip=[str(zpath)])
+    assert product.images.count() == 1
+    call_command("import_photos", csv=str(csv_path), zip=[str(zpath)])   # second run skips products that already have photos
+    assert product.images.count() == 1
