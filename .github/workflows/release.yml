@@ -37,7 +37,7 @@ jobs:
             echo "::error::'$TAG' is not a valid version tag. Use v1.2.3 or v1.2.3-rc.1"; exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ github.event.inputs.tag || github.ref_name }}   # always the tagged commit, even when run by hand
           fetch-depth: 0

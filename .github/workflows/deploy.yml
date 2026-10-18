@@ -44,7 +44,7 @@ jobs:
       REMOTE: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
       BASE: /srv/narizmart
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.ref }}
           fetch-depth: 0   # full history and tags, so `git describe` can name the release
