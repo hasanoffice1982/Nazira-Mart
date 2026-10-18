@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -67,13 +68,62 @@ def send_order(order: Order) -> list[SupplierOrder]:
     return results
 
 
+def has_supplier_items(order: Order) -> bool:
+    return any(i.product_id and hasattr(i.product, "supplier_link") for i in order.items.select_related("product__supplier_link"))
+
+
+def risky_phone(order: Order) -> bool:
+    """A number that already refused or cancelled an order is never auto-confirmed (staff call first)."""
+    return Order.objects.filter(phone=order.phone, status__in=Order.INACTIVE_STATUSES).exclude(pk=order.pk).exists()
+
+
+def maybe_auto_confirm(order_id: int) -> bool:
+    """Confirm a brand-new order by itself when it is clearly safe; otherwise leave it for a phone call."""
+    if not (settings.SUPPLIER_AUTO_CONFIRM and client.configured()):
+        return False
+    order = Order.objects.filter(pk=order_id, status=S.PENDING).first()
+    if order is None or order.total > settings.SUPPLIER_AUTO_CONFIRM_MAX_TOTAL:
+        return False
+    items = list(order.items.select_related("product__supplier_link"))
+    if not items or not all(i.product_id and hasattr(i.product, "supplier_link") and i.quantity == 1 for i in items) or risky_phone(order):
+        return False
+    change_status(order, S.CONFIRMED, note="Auto-confirmed (small order, new customer number, all items from the supplier)")
+    return True
+
+
+def cancel_at_supplier(order: Order) -> None:
+    """Customer or staff cancelled: tell the supplier too, as long as they have not started fulfilment."""
+    for parcel in order.supplier_orders.filter(state=SupplierOrder.State.SENT).exclude(supplier_order_id=""):
+        try:
+            client.set_status(parcel.supplier_order_id, "Canceled")
+            parcel.supplier_status = "Canceled"
+            parcel.save(update_fields=["supplier_status", "updated_at"])
+        except client.SupplierError as exc:
+            parcel.error = f"Cancel at supplier failed: {exc}"[:300]
+            parcel.save(update_fields=["error", "updated_at"])
+
+
 def on_status_change(order_id: int, new_status: str) -> None:
-    """Called after a status change commits: confirmed orders go to the supplier when auto-send is on."""
-    if new_status != S.CONFIRMED or not settings.SUPPLIER_AUTO_SEND or not client.configured():
+    """Called after a status change commits: confirmed orders go to the supplier, cancelled ones are cancelled there too."""
+    if not client.configured():
         return
     order = Order.objects.filter(pk=order_id).first()
-    if order:
+    if order is None:
+        return
+    if new_status == S.CONFIRMED and settings.SUPPLIER_AUTO_SEND:
         send_order(order)
+    elif new_status == S.CANCELLED and settings.SUPPLIER_AUTO_SEND:
+        cancel_at_supplier(order)
+
+
+def retry_failed(days: int = 3) -> int:
+    """Re-send parcels that failed (supplier down, wrong IP, empty wallet) for orders still waiting."""
+    since = timezone.now() - timedelta(days=days)
+    orders = Order.objects.filter(status__in=(S.CONFIRMED, S.PROCESSING), created_at__gte=since, supplier_orders__state=SupplierOrder.State.FAILED).distinct()
+    sent = 0
+    for order in orders:
+        sent += sum(1 for p in send_order(order) if p.state == SupplierOrder.State.SENT)
+    return sent
 
 
 # --- supplier -> shop ---------------------------------------------------------------

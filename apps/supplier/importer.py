@@ -116,7 +116,7 @@ def _add_photos(product: Product, item: dict, report: Report) -> None:
 
 
 def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "", limit: int = 0, activate: bool = False,
-         photos: bool = True, only_known_category: bool = True, min_stock: int = 1, dry_run: bool = False) -> Report:
+         photos: bool = True, only_known_category: bool = True, min_stock: int = 1, dry_run: bool = False, create_new: bool = True) -> Report:
     report = Report()
     catalog = items if items is not None else client.products()
     inc = re.compile(include, re.I) if include else None
@@ -153,6 +153,9 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
             link.base_price, link.commission, link.final_price, link.supplier_stock = _dec(item.get("base_price")), _dec(item.get("partner_commission")), price, max(stock, 0)
             link.save()
             report.updated += 1
+            continue
+        if not create_new:   # refresh-only run: never add products by itself
+            report.skipped += 1
             continue
         if (inc and not inc.search(title)) or (exc and exc.search(title)) or stock < min_stock or not item.get("is_active", 1):
             report.skipped += 1

@@ -113,6 +113,7 @@ def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon
         target.stock -= qty
         target.save(update_fields=["stock"])
     record_status(order, S.PENDING, note="Order placed — cash on delivery", by=user)
+    transaction.on_commit(lambda: _supplier_new_order_hook(order.pk))
     return order
 
 
@@ -144,6 +145,15 @@ def _supplier_hook(order_id: int, status: str) -> None:
         on_status_change(order_id, status)
     except Exception:  # noqa: BLE001  a supplier problem must never break the shop
         logging.getLogger("apps.supplier").exception("supplier hook failed for order id %s", order_id)
+
+
+def _supplier_new_order_hook(order_id: int) -> None:
+    from apps.supplier.services import maybe_auto_confirm
+
+    try:
+        maybe_auto_confirm(order_id)
+    except Exception:  # noqa: BLE001
+        logging.getLogger("apps.supplier").exception("auto-confirm failed for order id %s", order_id)
 
 
 def restore_stock(order: Order) -> None:

@@ -169,3 +169,77 @@ def test_dry_run_changes_nothing():
 def test_image_urls_resolve_relative_names_next_to_the_thumbnail():
     urls = importer.image_urls({"thumbnail": "https://x.test/uploads/t.jpg", "images": '["a.jpg","b.jpg"]'})
     assert urls == ["https://x.test/uploads/t.jpg", "https://x.test/uploads/a.jpg", "https://x.test/uploads/b.jpg"]
+
+
+# --- automation ---------------------------------------------------------------------
+@override_settings(SUPPLIER_AUTO_CONFIRM=True, SUPPLIER_AUTO_SEND=True, **KEYS)
+def test_safe_new_order_is_confirmed_and_sent_without_a_call(order, calls, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True):
+        assert services.maybe_auto_confirm(order.pk) is True
+    order.refresh_from_db()
+    assert order.status == "confirmed" and len(calls) == 1
+
+
+@override_settings(SUPPLIER_AUTO_CONFIRM=True, **KEYS)
+def test_phone_that_refused_before_needs_a_call(order, calls, django_user_model):
+    other = django_user_model.objects.create_user("o@example.com", "pass12345!x", email_verified=True)
+    old = create_order(user=other, lines=[(Product.objects.get(slug="retro-everyday-sunglasses").pk, 0, 1)], data=DELIVERY)
+    for st in (Order.Status.CONFIRMED, Order.Status.PROCESSING, Order.Status.SHIPPED, Order.Status.RETURNED):
+        change_status(old, st)
+    assert services.maybe_auto_confirm(order.pk) is False
+
+
+@override_settings(SUPPLIER_AUTO_CONFIRM=True, SUPPLIER_AUTO_CONFIRM_MAX_TOTAL=100, **KEYS)
+def test_big_orders_are_not_auto_confirmed(order, calls):
+    assert services.maybe_auto_confirm(order.pk) is False
+
+
+@override_settings(SUPPLIER_AUTO_CONFIRM=False, **KEYS)
+def test_auto_confirm_is_off_by_default(order, calls):
+    assert services.maybe_auto_confirm(order.pk) is False
+
+
+@override_settings(SUPPLIER_AUTO_SEND=True, **KEYS)
+def test_cancelling_an_order_cancels_it_at_the_supplier(order, calls):
+    services.send_order(order)
+    calls.clear()
+    services.cancel_at_supplier(order)
+    assert calls and calls[0][2] == {"status": "Canceled"} and "API-1" in calls[0][1]
+
+
+@override_settings(**KEYS)
+def test_retry_resends_failed_parcels(order, monkeypatch):
+    change_status(order, Order.Status.CONFIRMED)
+    monkeypatch.setattr(client, "call", lambda *a, **k: (_ for _ in ()).throw(client.SupplierError("down")))
+    services.send_order(order)
+    monkeypatch.setattr(client, "call", lambda *a, **k: {"order_details": {"system_order_id": "API-5", "status": "New"}})
+    assert services.retry_failed() == 1
+
+
+@override_settings(SUPPLIER_SYNC_INCLUDE="", **KEYS)
+def test_cron_without_an_include_list_only_refreshes(monkeypatch, capsys):
+    call_command("seed_catalog")
+    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": ITEMS} if p == "/products" else {"data": {"current_balance": 9000, "minimum_required": 200, "currency": "BDT"}})
+    before = Product.objects.count()
+    call_command("supplier_cron")
+    assert Product.objects.count() == before
+
+
+@override_settings(SUPPLIER_SYNC_INCLUDE="earring|girls", SUPPLIER_SYNC_ACTIVATE=True, **KEYS)
+def test_cron_with_an_include_list_imports_and_activates(monkeypatch):
+    call_command("seed_catalog")
+    monkeypatch.setattr(importer, "_add_photos", lambda *a, **k: None)
+    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": ITEMS} if p == "/products" else {"data": {"current_balance": 9000, "minimum_required": 200}})
+    call_command("supplier_cron")
+    assert Product.objects.filter(sku__in=["VND-1", "VND-2"], is_active=True).count() == 2
+
+
+@override_settings(SUPPLIER_LOW_BALANCE=500, **KEYS)
+def test_low_balance_sends_one_alert_email(monkeypatch, mailoutbox):
+    from django.core.cache import cache
+
+    cache.delete("supplier_low_balance_mail")
+    monkeypatch.setattr(client, "call", lambda m, p, payload=None: {"data": {"current_balance": 120, "minimum_required": 200}} if p == "/balance" else {"data": []})
+    call_command("supplier_cron")
+    call_command("supplier_cron")
+    assert len(mailoutbox) == 1 and "wallet is low" in mailoutbox[0].subject

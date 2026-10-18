@@ -37,3 +37,24 @@ Coupons/discounts do not reach the supplier: the courier still collects the full
 
 ## 5. Status updates (webhook)
 Shipped / Delivered / Returned / Cancelled from the supplier move the order automatically and save courier and tracking.
+
+## 6. Full automation (recommended settings in `.env`)
+```
+SUPPLIER_AUTO_SEND=True               # confirmed orders go to the supplier; cancelled orders are cancelled there too
+SUPPLIER_AUTO_CONFIRM=True            # safe new orders confirm themselves (no phone call)
+SUPPLIER_AUTO_CONFIRM_MAX_TOTAL=5000
+SUPPLIER_SYNC_INCLUDE=earring|necklace|pendant|girls|baby|hoodie|bag     # which new products to import by themselves
+SUPPLIER_SYNC_EXCLUDE=\bmen|islamic|watch
+SUPPLIER_SYNC_ACTIVATE=False          # False = new products wait hidden for your review; True = go live at once
+SUPPLIER_SYNC_LIMIT=30                # new products per run
+SUPPLIER_LOW_BALANCE=500              # email SUPPORT_EMAIL when the supplier wallet is below this
+```
+**Auto-confirm only happens when** the order total is within the limit, every item comes from the supplier with quantity 1,
+and the customer's phone has never refused or cancelled an order. Anything else stays "Order placed" for a phone call.
+**Cron (every 30 minutes)** runs everything else: refresh price and stock, import new matching products, retry failed sends,
+and email you when the wallet is low:
+```
+*/30 * * * * /home/salespal/virtualenv/narizmart_app/3.12/bin/python /home/salespal/narizmart_app/manage.py supplier_cron 2>&1 | tail -n 20 > /home/salespal/narizmart_data/supplier_last_run.log
+```
+Without `SUPPLIER_SYNC_INCLUDE`, the cron only refreshes price and stock of products you already linked, and never adds new ones.
+Prices from discount coupons are not passed to the supplier (the courier collects the supplier's price), so avoid coupons on supplier products.

@@ -325,3 +325,12 @@ SUPPLIER_PATH_BALANCE = env("SUPPLIER_PATH_BALANCE", default="/balance")
 SUPPLIER_PATH_PRODUCTS = env("SUPPLIER_PATH_PRODUCTS", default="/products")
 SUPPLIER_PATH_ORDERS = env("SUPPLIER_PATH_ORDERS", default="/orders")
 SUPPLIER_PATH_STATUS = env("SUPPLIER_PATH_STATUS", default="/orders/{id}/status")
+
+# supplier automation switches (all off by default)
+SUPPLIER_AUTO_CONFIRM = env.bool("SUPPLIER_AUTO_CONFIRM", default=False)          # confirm safe new orders without a phone call
+SUPPLIER_AUTO_CONFIRM_MAX_TOTAL = env.int("SUPPLIER_AUTO_CONFIRM_MAX_TOTAL", default=5000)
+SUPPLIER_SYNC_INCLUDE = env("SUPPLIER_SYNC_INCLUDE", default="")                  # regex of titles to import, e.g. earring|necklace|girls|baby
+SUPPLIER_SYNC_EXCLUDE = env("SUPPLIER_SYNC_EXCLUDE", default="")
+SUPPLIER_SYNC_ACTIVATE = env.bool("SUPPLIER_SYNC_ACTIVATE", default=False)        # show newly imported products right away
+SUPPLIER_SYNC_LIMIT = env.int("SUPPLIER_SYNC_LIMIT", default=30)                  # new products per run
+SUPPLIER_LOW_BALANCE = env.int("SUPPLIER_LOW_BALANCE", default=500)               # email you when the wallet falls below this (BDT)
