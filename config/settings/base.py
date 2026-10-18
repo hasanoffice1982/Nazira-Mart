@@ -129,7 +129,9 @@ EMAIL_HOST = env("EMAIL_HOST", default="smtp.resend.com" if RESEND_API_KEY else 
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="resend" if RESEND_API_KEY else "")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=RESEND_API_KEY)
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)  # port 465 (implicit SSL); then STARTTLS is off
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=not EMAIL_USE_SSL)  # port 587 (STARTTLS)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=15)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="NarizMart <no-reply@narizmart.com>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 

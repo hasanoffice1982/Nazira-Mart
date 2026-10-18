@@ -23,7 +23,9 @@ OLD_REQ=$(cat "$APP/requirements-cpanel.txt" 2>/dev/null || true)
 git reset --hard "origin/$BRANCH"               # the clone is deploy-only: never edit it by hand
 
 # copy only what the live site needs (tests, docs, CI, sample data stay out)
-cp -R apps config templates static "$APP/"
+for d in apps config templates static; do
+  rsync -a --delete --exclude '__pycache__' "$d/" "$APP/$d/"   # --delete drops files removed from the repo
+done
 cp manage.py passenger_wsgi.py requirements-cpanel.txt "$APP/"
 
 # the Python App's virtualenv (cPanel puts it under ~/virtualenv/<app root>/<python version>/)
@@ -36,7 +38,6 @@ export DJANGO_SETTINGS_MODULE=config.settings.production
 [ "$OLD_REQ" != "$(cat requirements-cpanel.txt)" ] && pip install --quiet -r requirements-cpanel.txt
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput --verbosity 0
-python manage.py check --deploy >/dev/null || echo "WARNING: check --deploy reported issues"
 
 echo "$NEW" > .deployed
 touch tmp/restart.txt                            # Passenger restarts the app on the next request

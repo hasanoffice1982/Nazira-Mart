@@ -1,10 +1,11 @@
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 
 from apps.catalog.models import Category, Color, Product, ProductVariant, Size
-from apps.core.models import Benefit, HeroSlide, PromoBanner, SiteSettings
+from apps.core.models import CACHE_KEY, Benefit, HeroSlide, PromoBanner, SiteSettings
 
 CATEGORIES = [
     ("women", "Women", "Women's Fashion", "Dresses & everyday style", "dress", "cat-women"),
@@ -122,6 +123,7 @@ class Command(BaseCommand):
                     product=product, color=Color.objects.get(name=color), size=Size.objects.get(name=size) if size else None,
                     defaults={"stock": stock, "price": price, "is_active": True},
                 )
+        cache.delete(CACHE_KEY)  # a stale cached row must not outlive a wiped database
         SiteSettings.load()
         for pos, (icon, title, text) in enumerate(benefits):
             Benefit.objects.get_or_create(title=title, defaults={"icon": icon, "text": text, "position": pos})
@@ -131,7 +133,7 @@ class Command(BaseCommand):
     @staticmethod
     def _default_banners() -> None:
         """A first hero slide and promo banner for a brand-new shop (an existing shop already has its own)."""
-        site = SiteSettings.load()
+        site = SiteSettings.load_fresh()
         if not HeroSlide.objects.exists():
             HeroSlide.objects.create(
                 site=site, position=0, eyebrow=site.hero_eyebrow, title=site.hero_title, highlight=site.hero_highlight, text=site.hero_text,

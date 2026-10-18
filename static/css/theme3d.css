@@ -53,6 +53,11 @@ h1,h2,h3,.section-title,.hero h1,.promo h2,.story-copy h2,.detail-title{font-fam
 /* hero */
 .hero{border-radius:40px;background:linear-gradient(135deg,#ffe3f0 0%,#f1e6ff 48%,#dff2ff 100%);box-shadow:0 8px 0 #ffc9e1,0 30px 60px rgba(122,77,255,.18);min-height:520px}
 .hero:before{display:none}
+.hero{display:block;grid-template-columns:none}
+.hero .hero-swiper{width:100%;border-radius:inherit}
+.hero-slide{min-height:520px;height:auto}
+.hero-text{min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.hero-right{min-width:0}
 .hero-slide{position:relative;display:grid;grid-template-columns:51% 49%;overflow:hidden}
 .hero-slide:before,.hero-slide:after{content:'';position:absolute;border-radius:50%;z-index:0;pointer-events:none}
 .hero-slide:before{width:150px;height:150px;left:44%;top:34px;background:radial-gradient(circle at 32% 28%,#fff6c8,#ffc83d 55%,#f09a00);box-shadow:0 20px 30px rgba(240,154,0,.3);animation:bob 6s ease-in-out infinite}
