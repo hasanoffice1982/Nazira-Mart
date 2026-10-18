@@ -12,6 +12,13 @@ from .models import SupplierOrder, SupplierProduct
 
 
 class ImportForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for f in self.fields.values():
+            f.widget.attrs["class"] = "custom-control-input" if isinstance(f.widget, forms.CheckboxInput) else "form-control"
+        self.fields["include"].widget.attrs["placeholder"] = "baby|frock|hoodie|three-piece"
+        self.fields["exclude"].widget.attrs["placeholder"] = "men|islamic"
+
     include = forms.CharField(required=False, label="Only titles containing", help_text="Words separated by | e.g. baby|frock|three piece. Empty = everything.")
     exclude = forms.CharField(required=False, label="Skip titles containing", help_text="e.g. men|islamic")
     limit = forms.IntegerField(min_value=1, max_value=50, initial=10, label="Max new products", help_text="Keep it small: photos are downloaded and the page waits for them.")
