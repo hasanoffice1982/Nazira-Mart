@@ -188,6 +188,18 @@
   });
 
   // PWA: register the service worker; when a new release is waiting, offer a one-tap refresh.
+  // Swiper waits for the browser's "transitionend" signal before it accepts the next slide (and before autoplay continues).
+  // If that signal never comes (reduced-motion settings, background tabs, some browsers) the slider would lock after one move,
+  // so a short timer releases it. Harmless when the signal does arrive.
+  const unlockAfterTransition = (swiper) => {
+    let timer;
+    swiper.on('slideChangeTransitionStart', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { if (swiper.animating) swiper.transitionEnd(true); }, (swiper.params.speed || 700) + 250);
+    });
+    swiper.on('slideChangeTransitionEnd', () => clearTimeout(timer));
+  };
+
   // Home slider (Swiper): sliding animation, drag/swipe, arrows, dots, autoplay with a pause button (also pauses on hover)
   document.querySelectorAll('[data-hero-swiper]').forEach((el) => {
     const hero = el.closest('[data-hero]');
@@ -200,6 +212,7 @@
       navigation: { nextEl: el.querySelector('.hero-next'), prevEl: el.querySelector('.hero-prev') },
       pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
     });
+    unlockAfterTransition(swiper);
     const pause = el.querySelector('.hero-pause');
     if (!pause) return;
     if (seconds <= 0) { pause.remove(); return; }
@@ -231,12 +244,13 @@
     const wrap = el.closest('[data-promo]');
     if (typeof Swiper === 'undefined' || el.querySelectorAll('.swiper-slide').length < 2) return;
     const seconds = parseInt(wrap.dataset.seconds, 10) || 0;
-    new Swiper(el, {
+    const promo = new Swiper(el, {
       loop: true, speed: 700, grabCursor: true, a11y: { enabled: true },
       autoplay: seconds > 0 ? { delay: seconds * 1000, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
       navigation: { nextEl: el.querySelector('.promo-next'), prevEl: el.querySelector('.promo-prev') },
       pagination: { el: el.querySelector('.promo-dots'), clickable: true },
     });
+    unlockAfterTransition(promo);
   });
 
   // A dismissed prompt stays away for the rest of the visit; the next visit offers the update again.
