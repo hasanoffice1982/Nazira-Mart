@@ -16,6 +16,10 @@ def csp_update(site) -> dict[str, list[str]]:
         add("script-src", "https://connect.facebook.net")
         add("connect-src", "https://www.facebook.com", "https://connect.facebook.net")
         add("img-src", "https://www.facebook.com")
+    if site.tiktok_pixel_id:
+        add("script-src", "https://analytics.tiktok.com")
+        add("connect-src", "https://analytics.tiktok.com", "https://analytics-ipv6.tiktokw.com", "https://business-api.tiktok.com")
+        add("img-src", "https://analytics.tiktok.com")
     if site.google_tag_id:
         add("script-src", "https://www.googletagmanager.com", "https://www.google-analytics.com")
         add("connect-src", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com",

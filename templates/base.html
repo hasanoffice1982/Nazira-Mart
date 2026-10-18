@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a3550">
 <title>{% block title %}NarizMart — Pretty finds for ladies &amp; kids.{% endblock %}</title>
 {% block seo %}{% seo_tags %}{% endblock %}
-{% if site.google_site_verification %}<meta name="google-site-verification" content="{{ site.google_site_verification }}">{% endif %}{% if site.meta_domain_verification %}<meta name="facebook-domain-verification" content="{{ site.meta_domain_verification }}">{% endif %}
+{% if site.google_site_verification %}<meta name="google-site-verification" content="{{ site.google_site_verification }}">{% endif %}{% if site.tiktok_domain_verification %}<meta name="tiktok-developers-site-verification" content="{{ site.tiktok_domain_verification }}">{% endif %}{% if site.meta_domain_verification %}<meta name="facebook-domain-verification" content="{{ site.meta_domain_verification }}">{% endif %}
 <link rel="manifest" href="{% url 'core:manifest' %}">
 <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{% static 'pwa/favicon-32.png' %}">
@@ -37,7 +37,7 @@
 {% include "components/mobilebar.html" %}
 {% include "components/drawers.html" %}
 <div id="toast" class="toast" role="status"></div>
-{% if site.meta_pixel_id or site.google_tag_id %}<div id="bm-tracking" hidden data-meta="{{ site.meta_pixel_id }}" data-google="{{ site.google_tag_id }}" data-events="{% if site.track_shopping_events %}1{% else %}0{% endif %}"></div>
+{% if site.meta_pixel_id or site.google_tag_id or site.tiktok_pixel_id %}<div id="bm-tracking" hidden data-meta="{{ site.meta_pixel_id }}" data-tiktok="{{ site.tiktok_pixel_id }}" data-google="{{ site.google_tag_id }}" data-events="{% if site.track_shopping_events %}1{% else %}0{% endif %}"></div>
 {% if track_data and site.track_shopping_events %}{{ track_data|json_script:"bm-track-data" }}{% endif %}
 <script src="{% static 'js/tracking.js' %}" defer></script>{% endif %}
 </body>

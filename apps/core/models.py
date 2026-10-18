@@ -36,6 +36,7 @@ class SiteSettings(models.Model):
     footer_tagline = models.CharField(max_length=80, blank=True, default="Made with love in Bangladesh ♡", help_text="Right side of the bottom bar")
     facebook_url = models.URLField(blank=True, validators=[_https_only], help_text="Full link, e.g. https://facebook.com/yourpage. Empty = icon hidden.")
     instagram_url = models.URLField(blank=True, validators=[_https_only])
+    tiktok_url = models.URLField(blank=True, validators=[_https_only], help_text="Your TikTok profile link. Empty = icon hidden.")
     youtube_url = models.URLField(blank=True, validators=[_https_only])
     linkedin_url = models.URLField(blank=True, validators=[_https_only])
 
@@ -55,6 +56,8 @@ class SiteSettings(models.Model):
     google_tag_id = models.CharField("Google tag / Analytics / Ads / Tag Manager ID", max_length=24, blank=True, validators=[RegexValidator(r"^(G|GT|GTM|AW)-[A-Z0-9]{4,20}$", "Use an ID like G-ABC123XYZ, GTM-ABCD123 or AW-123456789.")])
     track_shopping_events = models.BooleanField("Send shopping events", default=True, help_text="Product views, add to cart, checkout started and purchases (with order value), for retargeting and conversion reports")
     google_site_verification = models.CharField("Google Search Console verification", max_length=100, blank=True, validators=[RegexValidator(r"^[A-Za-z0-9_-]{10,100}$", "Paste only the verification code.")])
+    tiktok_pixel_id = models.CharField("TikTok Pixel ID", max_length=30, blank=True, validators=[RegexValidator(r"^[A-Za-z0-9]{10,30}$", "A TikTok Pixel ID is 10-30 letters and digits.")])
+    tiktok_domain_verification = models.CharField("TikTok domain verification", max_length=100, blank=True, validators=[RegexValidator(r"^[A-Za-z0-9_-]{10,100}$", "Paste only the verification code.")])
     meta_domain_verification = models.CharField("Meta domain verification", max_length=100, blank=True, validators=[RegexValidator(r"^[A-Za-z0-9_-]{10,100}$", "Paste only the verification code.")])
     show_popular = models.BooleanField("Show Popular products section", default=True)
     popular_mode = models.CharField("How to choose popular products", max_length=6, default="mix", choices=[
@@ -157,7 +160,7 @@ class SiteSettings(models.Model):
     @property
     def social_links(self) -> list[tuple[str, str, str]]:
         """(label, short text, url) for each link that has been filled in."""
-        candidates = [("Facebook", "f", self.facebook_url), ("Instagram", "ig", self.instagram_url), ("YouTube", "▶", self.youtube_url), ("LinkedIn", "in", self.linkedin_url)]
+        candidates = [("Facebook", "f", self.facebook_url), ("Instagram", "ig", self.instagram_url), ("TikTok", "tt", self.tiktok_url), ("YouTube", "▶", self.youtube_url), ("LinkedIn", "in", self.linkedin_url)]
         return [(label, short, url) for label, short, url in candidates if url]
 
     @property
