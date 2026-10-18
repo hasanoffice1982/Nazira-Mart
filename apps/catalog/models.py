@@ -81,6 +81,7 @@ class Product(models.Model):
     swatches = models.JSONField(default=list, blank=True)
     stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    is_gift = models.BooleanField("Gift idea", default=False, help_text="Shows this product in Shop All > Gift ideas.")
     is_popular_pick = models.BooleanField("Pin to Popular products", default=False, help_text="Shows this product in the home page Popular products section (see Site settings for how pins and best sellers mix)")
     popular_order = models.PositiveSmallIntegerField("Pin order", default=100, help_text="Lower numbers come first among pinned products")
     created_at = models.DateTimeField(auto_now_add=True)

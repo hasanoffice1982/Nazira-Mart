@@ -17,7 +17,7 @@ from .images import ensure_rendition
 
 DEFAULT_DESCRIPTION = "NarizMart: fashion, beauty, jewellery, bags, toys and kids’ favourites. Pretty finds for ladies and little ones, delivered across Bangladesh with cash on delivery."
 NOINDEX_PREFIXES = ("/cart/", "/orders/", "/accounts/", "/wishlist/", "/supplier/", "/shop/fragment/")
-CANONICAL_PARAMS = ("category",)   # filters that are real pages; sort, search and tracking parameters are dropped
+CANONICAL_PARAMS = ("category", "collection")   # filters that are real pages; sort, search and tracking parameters are dropped
 RETURN_DAYS = 7
 TRANSIT_DAYS = (1, 5)
 

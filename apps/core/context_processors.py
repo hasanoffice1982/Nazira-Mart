@@ -27,5 +27,6 @@ def storefront(request) -> dict:
         "wishlist_count": len(wishlist_ids),
         "nav_categories": categories,
         "header_categories": [c for c in categories if c.show_in_nav][: site.nav_max_categories],
+        "header_menu_categories": [c for c in categories if c.show_in_nav],   # the Shop All dropdown lists every one of them
         "currency": site.currency_symbol,
     }

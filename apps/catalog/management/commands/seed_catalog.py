@@ -112,6 +112,8 @@ class Command(BaseCommand):
                     "description": "Soft, bright and made to be loved. Carefully chosen for ladies and little ones.",
                 },
             )
+        if options["dataset"] != "test":   # a few demo gift ideas
+            Product.objects.filter(slug__in=["cuddle-bear-plush-teddy", "pearl-heart-necklace", "velvet-kiss-lipstick", "rainbow-learning-blocks"]).update(is_gift=True)
         for pos, (name, hex_code) in enumerate(colors.items()):
             Color.objects.update_or_create(name=name, defaults={"hex_code": hex_code, "position": pos})
         for pos, name in enumerate(sizes):

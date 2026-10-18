@@ -3,6 +3,9 @@
 <div id="cartBody" class="drawer-body">{% include "cart/_drawer_body.html" %}</div></div>
 <div class="drawer" id="menuDrawer"><div class="drawer-head"><strong>Explore NarizMart</strong><button class="close" data-action="close-panels" aria-label="Close menu"><span data-icon="x"></span></button></div><div class="drawer-content">
 <a class="drawer-menu-item" href="{% url 'catalog:shop' %}">Shop all <span data-icon="arrow-right" class="tinyicon"></span></a>
+<a class="drawer-menu-item" href="{% url 'catalog:shop' %}?collection=new">New arrivals ✦ <span data-icon="arrow-right" class="tinyicon"></span></a>
+<a class="drawer-menu-item" href="{% url 'catalog:shop' %}?collection=gifts">Gift ideas <span data-icon="arrow-right" class="tinyicon"></span></a>
+<a class="drawer-menu-item" href="{% url 'catalog:shop' %}?collection=sale">Discounted products <span data-icon="arrow-right" class="tinyicon"></span></a>
 {% for c in nav_categories %}<a class="drawer-menu-item" href="{% url 'catalog:shop' %}?category={{ c.slug }}">{{ c.title }} <span data-icon="arrow-right" class="tinyicon"></span></a>{% endfor %}
 <a class="drawer-menu-item" href="{% url 'accounts:addresses' %}">My addresses <span data-icon="arrow-right" class="tinyicon"></span></a>
 <a class="drawer-menu-item" href="{% url 'orders:track' %}">Track my order <span data-icon="arrow-right" class="tinyicon"></span></a>

@@ -27,7 +27,7 @@
 <script src="{% static 'js/app.js' %}" defer></script>
 <script src="{% static 'js/fx3d.js' %}" defer></script>
 </head>
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-boost="false">
+<body class="layout-{{ site.layout_mode|default:'wide' }} hero-{{ site.layout_hero_height|default:'normal' }}" style="--side-pad:{{ site.layout_side_padding|default:96 }}px" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-boost="false">
 {% include "components/announcement.html" %}
 {% include "components/header.html" %}
 {% include "components/nav.html" %}

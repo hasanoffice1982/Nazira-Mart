@@ -60,7 +60,17 @@ class PageSitemap(Sitemap):
         return obj.updated_at
 
 
-SITEMAPS = [StaticSitemap(), CategorySitemap(), ProductSitemap(), PageSitemap()]
+class CollectionSitemap(Sitemap):
+    changefreq, priority = "daily", 0.6
+
+    def items(self):
+        return ["new", "gifts", "sale"]
+
+    def location(self, item):
+        return reverse("catalog:shop") + f"?collection={item}"
+
+
+SITEMAPS = [StaticSitemap(), CategorySitemap(), CollectionSitemap(), ProductSitemap(), PageSitemap()]
 
 
 @cache_page(60 * 15)

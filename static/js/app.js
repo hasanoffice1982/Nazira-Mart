@@ -233,7 +233,7 @@
       mousewheel: { forceToAxis: true },
       navigation: { nextEl: nav.querySelector('.cat-next'), prevEl: nav.querySelector('.cat-prev'), disabledClass: 'swiper-button-disabled' },
       pagination: { el: nav.querySelector('.cat-dots'), clickable: true },
-      breakpoints: { 600: { slidesPerView: 3.4 }, 820: { slidesPerView: 4.4 }, 1100: { slidesPerView: 5.3, spaceBetween: 16 } },
+      breakpoints: { 600: { slidesPerView: 3.4 }, 820: { slidesPerView: 4.4 }, 1100: { slidesPerView: 5.3, spaceBetween: 16 }, 1500: { slidesPerView: 6.3, spaceBetween: 18 }, 1800: { slidesPerView: 7.3, spaceBetween: 20 } },
     });
     unlockAfterTransition(swiper);
     const sync = () => { nav.hidden = swiper.isLocked; };

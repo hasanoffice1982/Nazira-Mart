@@ -10,7 +10,7 @@ from .models import Product
 from apps.core.tracking import product_event
 
 from .popular import popular_products
-from .services import active_categories, search_products
+from .services import COLLECTIONS, active_categories, search_products
 
 
 class ProductListMixin:
@@ -20,13 +20,19 @@ class ProductListMixin:
         params = self.request.GET
         category = params.get("category", "")
         query = params.get("q", "").strip()
-        page = Paginator(search_products(category=category, query=query, sort=params.get("sort", "")), self.page_size)
+        sort = params.get("sort", "")
+        collection = params.get("collection", "")
+        if collection not in COLLECTIONS:
+            collection = "new" if sort == "new" else ""   # older links used ?sort=new
+        page = Paginator(search_products(category=category, query=query, sort=sort, collection=collection), self.page_size)
         return {
             "products": page.get_page(params.get("page")),
             "categories": active_categories(),
             "active_category": category,
             "query": query,
-            "sort": params.get("sort", ""),
+            "collection": collection,
+            "collection_title": COLLECTIONS.get(collection, ""),
+            "sort": sort,
         }
 
 

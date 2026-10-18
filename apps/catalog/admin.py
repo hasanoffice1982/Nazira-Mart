@@ -126,10 +126,10 @@ MAX_BULK_BYTES = 100 * 1024 * 1024   # Nginx and Cloudflare cap one request at a
 class ProductAdmin(RichTextAdminMixin, admin.ModelAdmin):
     rich_fields = ("description",)
     change_list_template = "admin/catalog/product/change_list.html"
-    list_display = ("thumb", "name", "sku", "category", "price", "variant_count", "stock_total", "stock_flag", "is_popular_pick", "is_active")
+    list_display = ("thumb", "name", "sku", "category", "price", "variant_count", "stock_total", "stock_flag", "is_gift", "is_popular_pick", "is_active")
     list_display_links = ("thumb", "name")
-    list_filter = ("category", "is_active", "is_popular_pick")
-    list_editable = ("price", "is_popular_pick", "is_active")
+    list_filter = ("category", "is_active", "is_gift", "is_popular_pick")
+    list_editable = ("price", "is_gift", "is_popular_pick", "is_active")
     search_fields = ("name", "sku", "variants__sku")
     prepopulated_fields = {"slug": ("name",)}
     list_select_related = ("category",)
@@ -139,6 +139,7 @@ class ProductAdmin(RichTextAdminMixin, admin.ModelAdmin):
     fieldsets = (
         ("Basics", {"fields": ("name", "slug", "sku", "category", "description")}),
         ("Pricing & stock", {"fields": ("price", "old_price", "badge", "stock", "is_active"), "description": "Stock here applies only to products without variants. With variants, stock is managed per variant below."}),
+        ("Collections", {"fields": ("is_gift",), "description": "Tick to list this product under Shop All > Gift ideas. New arrivals (newest first) and Discounted (old price above price) fill themselves."}),
         ("Home page: Popular products", {"fields": ("is_popular_pick", "popular_order"), "description": "Pin this product to the home page Popular products section. Products that sell well are added there automatically."}),
         ("Media & look", {"fields": ("image", "art_type", "bg_color", "swatches", "rating"), "description": "Gallery photos (added in the Photos tab or with Upload many photos) take priority over the single photo below."}),
     )

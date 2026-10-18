@@ -26,6 +26,16 @@ class SiteSettings(models.Model):
         help_text="Orders of this amount or more get free delivery. Enter 0 to turn free delivery off (then also edit the announcement and Shipping page text).",
     )
 
+    # --- page layout: try both and keep the one you like ---
+    layout_mode = models.CharField("Page width", max_length=5, default="wide", choices=[
+        ("wide", "Wide: full screen width with space on each side"),
+        ("boxed", "Boxed: centered, at most 1336 px wide"),
+    ], help_text="Wide fills big screens. Boxed keeps the content in a centered column. Save, then refresh the shop to compare.")
+    layout_side_padding = models.PositiveSmallIntegerField("Side space in wide mode (px)", default=96, validators=[MinValueValidator(16), MaxValueValidator(220)], help_text="Space on the left and right of the page on big screens (90–100 looks balanced). Smaller screens shrink it by themselves.")
+    layout_hero_height = models.CharField("Home banner height", max_length=7, default="normal", choices=[
+        ("compact", "Compact (shorter)"), ("normal", "Normal"), ("tall", "Tall (bigger picture)"),
+    ])
+
     # --- footer, contact details and social links ---
     company_name = models.CharField(max_length=60, default="NarizMart", help_text="Used in the footer copyright line")
     footer_about = models.TextField(default="Pretty finds for ladies and little ones. Fashion, beauty, toys and kids' favourites, picked with love in Bangladesh.")
@@ -71,7 +81,7 @@ class SiteSettings(models.Model):
     popular_label = models.CharField(max_length=40, default="BEST SELLERS")
     popular_title = models.CharField(max_length=60, default="Popular products")
     popular_subtitle = models.CharField(max_length=120, blank=True, default="What everyone is adding to their cart.")
-    nav_max_categories = models.PositiveSmallIntegerField("Max categories in header menu", default=4, validators=[MaxValueValidator(12)], help_text="Which ones: tick \"Show in header menu\" on each category and drag them into order (Catalog → Categories).")
+    nav_max_categories = models.PositiveSmallIntegerField("Max categories in header menu", default=4, validators=[MaxValueValidator(12)], help_text="Not used any more: the Shop All dropdown lists every category that has \"Show in header menu\" ticked, in the order set under Catalog → Categories.")
     nav_note = models.CharField(max_length=60, blank=True, default="Delivering across Bangladesh", help_text="Small note at the right of the menu bar")
     hero_button_primary = models.CharField(max_length=30, default="Explore collection")
     hero_button_secondary = models.CharField(max_length=30, default="Browse categories")

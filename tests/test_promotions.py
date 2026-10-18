@@ -212,7 +212,7 @@ def test_discount_row_hidden_when_there_is_none(buyer):
 
     c = Client()
     c.force_login(buyer)
-    assert "Discount" not in c.get(o.get_absolute_url()).content.decode()
+    assert "sum-discount" not in c.get(o.get_absolute_url()).content.decode()   # the order summary has no discount row
 
 
 def test_admin_can_manage_promotions(admin_client):

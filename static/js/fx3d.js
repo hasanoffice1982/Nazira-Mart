@@ -54,7 +54,25 @@
     }).observe(badge, { childList: true, characterData: true, subtree: true });
   }
 
+  // Shop All dropdown: opens on hover and keyboard focus; on touch screens the first tap opens it, Escape and outside clicks close it
+  function initNavDrop() {
+    document.querySelectorAll('[data-nav-drop]').forEach((drop) => {
+      const btn = drop.querySelector('.nav-drop-btn');
+      const set = (open) => { drop.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+      drop.addEventListener('mouseenter', () => set(true));
+      drop.addEventListener('mouseleave', () => set(false));
+      drop.addEventListener('focusin', () => set(true));
+      drop.addEventListener('focusout', (e) => { if (!drop.contains(e.relatedTarget)) set(false); });
+      btn.addEventListener('click', (e) => {
+        if (window.matchMedia('(hover:none)').matches && !drop.classList.contains('open')) { e.preventDefault(); set(true); }
+      });
+      document.addEventListener('click', (e) => { if (!drop.contains(e.target)) set(false); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { set(false); btn.blur(); } });
+    });
+  }
+
   const start = () => {
+    initNavDrop();
     watchCart();
     scan();
     document.body.addEventListener('htmx:afterSwap', (e) => scan(e.target));
