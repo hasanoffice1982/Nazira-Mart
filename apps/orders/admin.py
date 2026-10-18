@@ -34,7 +34,7 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ("number", "user__email", "phone", "full_name")
     readonly_fields = ("number", "user", "subtotal", "discount", "promotion", "promotion_label", "coupon_code", "delivery_charge", "total", "payment_method", "created_at", "updated_at", "billing_name", "billing_phone", "billing_address", "billing_city")
     inlines = [OrderItemInline, HistoryInline]
-    actions = ["mark_confirmed", "mark_processing", "mark_shipped", "mark_delivered"]
+    actions = ["mark_confirmed", "mark_processing", "mark_shipped", "mark_delivered", "mark_returned"]
 
     @admin.display(description="Status", ordering="status")
     def status_badge(self, obj):
@@ -76,6 +76,10 @@ class OrderAdmin(admin.ModelAdmin):
     def mark_delivered(self, request, queryset):
         self._bulk(request, queryset, Order.Status.DELIVERED)
 
+    @admin.action(description="Mark as Returned / refused (stock goes back)")
+    def mark_returned(self, request, queryset):
+        self._bulk(request, queryset, Order.Status.RETURNED)
+
 
 @admin.register(Promotion)
 class PromotionAdmin(admin.ModelAdmin):
@@ -108,4 +112,4 @@ class PromotionAdmin(admin.ModelAdmin):
 
     @admin.display(description="Times used")
     def times_used(self, obj):
-        return obj.orders.exclude(status=Order.Status.CANCELLED).count() if obj.pk else 0
+        return obj.orders.exclude(status__in=Order.INACTIVE_STATUSES).count() if obj.pk else 0

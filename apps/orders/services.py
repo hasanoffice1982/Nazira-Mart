@@ -16,9 +16,10 @@ TRANSITIONS: dict[str, set[str]] = {
     S.PENDING: {S.CONFIRMED, S.CANCELLED},
     S.CONFIRMED: {S.PROCESSING, S.CANCELLED},
     S.PROCESSING: {S.SHIPPED, S.CANCELLED},
-    S.SHIPPED: {S.DELIVERED},
-    S.DELIVERED: set(),
+    S.SHIPPED: {S.DELIVERED, S.RETURNED},
+    S.DELIVERED: {S.RETURNED},
     S.CANCELLED: set(),
+    S.RETURNED: set(),
 }
 CUSTOMER_CANCELLABLE = {S.PENDING, S.CONFIRMED}
 
@@ -122,8 +123,10 @@ def change_status(order: Order, new_status: str, *, note: str = "", by=None) -> 
     order.status = new_status
     if new_status == S.DELIVERED and order.payment_method == Order.PaymentMethod.COD:
         order.payment_status = Order.PaymentStatus.PAID
+    if new_status == S.RETURNED and order.payment_status == Order.PaymentStatus.PAID:
+        order.payment_status = Order.PaymentStatus.REFUNDED   # was delivered and paid, then sent back
     order.save(update_fields=["status", "payment_status", "updated_at"])
-    if new_status == S.CANCELLED:
+    if new_status in (S.CANCELLED, S.RETURNED):
         restore_stock(order)
     record_status(order, new_status, note=note, by=by)
     by_customer = bool(by and by.pk == order.user_id and not by.is_staff)

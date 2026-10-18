@@ -20,6 +20,9 @@ class Order(models.Model):
         SHIPPED = "shipped", "Out for delivery"
         DELIVERED = "delivered", "Delivered"
         CANCELLED = "cancelled", "Cancelled"
+        RETURNED = "returned", "Returned / refused"   # parcel came back: refused at the door, or returned after delivery
+
+    INACTIVE_STATUSES = ("cancelled", "returned")   # these orders do not count as sales (best sellers, coupon use, reports)
 
     class PaymentMethod(models.TextChoices):
         COD = "cod", "Cash on delivery"

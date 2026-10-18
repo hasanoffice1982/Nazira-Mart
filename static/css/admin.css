@@ -55,7 +55,7 @@ a{color:var(--teal)}a:hover{color:#2c7a72}
 
 /* status pills (used in list_display) */
 .status{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:800;background:#e9f4ee;color:#1f5a4b}
-.status-cancelled{background:#fbeceb;color:#9b3a30}.status-shipped{background:#e8f0fb;color:#24508f}.status-pending{background:#fff4de;color:#8a5a00}
+.status-cancelled{background:#fbeceb;color:#9b3a30}.status-returned{background:#ffe9d6;color:#b4500a}.status-shipped{background:#e8f0fb;color:#24508f}.status-pending{background:#fff4de;color:#8a5a00}
 
 /* ---- AdminLTE 4 / Bootstrap 5 hooks (Jazzmin 3) ---- */
 :root,[data-bs-theme=light]{--bs-primary:#3b9189;--bs-primary-rgb:59,145,137;--bs-link-color:#3b9189;--bs-link-color-rgb:59,145,137;--bs-link-hover-color:#2c7a72;

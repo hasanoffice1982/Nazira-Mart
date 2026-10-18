@@ -22,7 +22,7 @@ CACHE_SECONDS = 300
 def best_seller_ids(days: int, limit: int) -> list[int]:
     from apps.orders.models import Order, OrderItem
 
-    qs = OrderItem.objects.filter(product__is_active=True).exclude(order__status=Order.Status.CANCELLED)
+    qs = OrderItem.objects.filter(product__is_active=True).exclude(order__status__in=Order.INACTIVE_STATUSES)
     if days:
         qs = qs.filter(order__created_at__gte=timezone.now() - timedelta(days=days))
     rows = qs.values("product_id").annotate(units=Sum("quantity")).order_by("-units", "product_id")[:limit]

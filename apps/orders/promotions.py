@@ -33,7 +33,7 @@ def _money(amount: Decimal) -> str:
 
 
 def _used(promotion: Promotion, user=None) -> int:
-    qs = Order.objects.filter(promotion=promotion).exclude(status=Order.Status.CANCELLED)
+    qs = Order.objects.filter(promotion=promotion).exclude(status__in=Order.INACTIVE_STATUSES)
     if user is not None and getattr(user, "is_authenticated", False):
         qs = qs.filter(user=user)
     return qs.count()

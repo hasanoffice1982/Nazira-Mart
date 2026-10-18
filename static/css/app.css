@@ -43,7 +43,7 @@ form .drawer-menu-item{width:100%}
 .order-row{display:grid;grid-template-columns:1fr auto auto;gap:18px;align-items:center;padding:18px 20px;border:1px solid var(--line);border-radius:14px;margin-bottom:12px;background:#fff}
 .order-row small{display:block;color:var(--muted);margin-top:4px}
 .status{display:inline-block;padding:5px 11px;border-radius:99px;font-size:11px;font-weight:800;background:#fff3e8;color:#f26a0f}
-.status-cancelled{background:#fbeceb;color:#9b3a30}.status-shipped{background:#e8f0fb;color:#24508f}.status-pending{background:#fff4de;color:#8a5a00}
+.status-cancelled{background:#fbeceb;color:#9b3a30}.status-returned{background:#ffe9d6;color:#b4500a}.status-shipped{background:#e8f0fb;color:#24508f}.status-pending{background:#fff4de;color:#8a5a00}
 .timeline{list-style:none;margin:18px 0;padding:0 0 0 20px;border-left:2px solid #dbe8e1}
 .timeline li{position:relative;padding:0 0 18px 18px;font-size:13px}
 .timeline li::before{content:"";position:absolute;left:-27px;top:3px;width:12px;height:12px;border-radius:50%;background:#f26a0f;border:3px solid #fff;box-shadow:0 0 0 1px #f26a0f}
