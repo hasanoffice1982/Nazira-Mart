@@ -286,3 +286,19 @@ main{padding-bottom:64px}
 /* product pictures (transparent cut-outs and normal photos) are shown whole, centred, on the category tint */
 .product-visual .media-img{object-fit:contain;padding:7%;box-sizing:border-box;border-radius:0}
 .gallery-main .media-img,.modal-art .media-img,.detail-art .media-img{object-fit:contain;padding:6%;box-sizing:border-box}
+
+/* the whole product card is one big link (stretched from the title); heart, + and quick view stay separate buttons on top */
+.product-card{position:relative;cursor:pointer}
+.product-card .prod-name::after{content:'';position:absolute;inset:0;z-index:2;border-radius:30px}
+.product-card .qv-btn,.product-card .wish,.product-card .product-add,.product-card .product-badge{z-index:5}
+.qv-hit.qv-btn{position:absolute;inset:auto;left:12px;bottom:12px;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#fff;color:var(--ink);box-shadow:0 4px 0 #c9e4e9;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s}
+.product-card:hover .qv-btn,.product-card:focus-within .qv-btn{opacity:1;transform:none}
+@media(hover:none){.qv-hit.qv-btn{opacity:1;transform:none;width:34px;height:34px}}
+.product-card:focus-within{outline:3px solid rgba(14,124,143,.35);outline-offset:3px;border-radius:30px}
+.product-card .prod-name:focus-visible{outline:none}
+
+/* layering: the picture area has its own link underneath its buttons; the title link covers the text area */
+.product-card .product-visual{z-index:3}
+.product-visual .card-link{position:absolute;inset:0;z-index:1}
+.product-visual svg.prod-svg,.product-visual .media-img,.product-visual:after{pointer-events:none}
+.product-visual .product-badge{pointer-events:none}
