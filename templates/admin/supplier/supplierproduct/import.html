@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}{% endblock %}
+{% block content %}
+<div id="content-main" style="max-width:720px">
+  <p>Pull products from the supplier catalogue. New products are created <strong>hidden</strong> so you can review them; existing ones only get a fresh price and stock.
+     Tick <em>Preview only</em> first to see what would be imported without changing anything.</p>
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="submit" value="Run" class="default"> <a href="{% url 'admin:supplier_supplierproduct_changelist' %}">Back</a></p>
+  </form>
+  {% if report %}
+    <h2>Result</h2>
+    <p><strong>{% if dry_run %}Preview: {% endif %}seen {{ report.seen }}, new {{ report.created }}, refreshed {{ report.updated }}, skipped {{ report.skipped }}, photos {{ report.images }}</strong></p>
+    {% if report.notes %}<pre style="white-space:pre-wrap">{% for line in report.notes %}{{ line }}
+{% endfor %}</pre>{% endif %}
+  {% endif %}
+  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+</div>
+{% endblock %}
