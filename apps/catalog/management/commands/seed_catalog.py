@@ -26,18 +26,18 @@ BENEFITS = [
 
 # name, art, category, price, old, badge, rating, bg, swatches, stock
 PRODUCTS = [
-    ("Rose Quilted Handbag", "handbag", "bags", 2490, 3200, "BESTSELLER", "4.9", "#ffe3f0", ["#ff7eb6", "#b9a0ff", "#fff1d6"], 40),
-    ("Blush Stiletto Heels", "heels", "shoes", 2190, 2790, "-21%", "4.8", "#ffe6e0", ["#ff4f9a", "#2b1650"], 30),
-    ("Velvet Kiss Lipstick", "lipstick", "beauty", 590, 790, "NEW DROP", "4.7", "#f3e6ff", ["#ff4f9a", "#c91f73", "#ff9ccb"], 120),
-    ("Lilac Twirl Party Dress", "dress", "women", 2890, 3590, "TRENDING", "4.9", "#ece4ff", ["#7a4dff", "#ffc83d"], 35),
-    ("Cuddle Bear Plush Teddy", "teddy", "toys", 1290, 1590, "KIDS' FAVE", "4.9", "#fff1d6", ["#d9924f", "#ff9ccb"], 60),
-    ("Rainbow Learning Blocks", "blocks", "toys", 990, 1290, "-23%", "4.8", "#e1f4ff", ["#ffc83d", "#4cb8ff", "#ff4f9a"], 80),
+    ("Rose Quilted Handbag", "handbag", "bags", 2490, 3200, "BESTSELLER", "4.9", "#fff3e8", ["#ff7eb6", "#8fd3dc", "#fff1d6"], 40),
+    ("Blush Stiletto Heels", "heels", "shoes", 2190, 2790, "-21%", "4.8", "#ffe1cc", ["#f26a0f", "#0a3550"], 30),
+    ("Velvet Kiss Lipstick", "lipstick", "beauty", 590, 790, "NEW DROP", "4.7", "#f3e6ff", ["#f26a0f", "#c4510a", "#ffa24d"], 120),
+    ("Lilac Twirl Party Dress", "dress", "women", 2890, 3590, "TRENDING", "4.9", "#dcf0f3", ["#0e7c8f", "#ffc83d"], 35),
+    ("Cuddle Bear Plush Teddy", "teddy", "toys", 1290, 1590, "KIDS' FAVE", "4.9", "#fff1d6", ["#d9924f", "#ffa24d"], 60),
+    ("Rainbow Learning Blocks", "blocks", "toys", 990, 1290, "-23%", "4.8", "#e1f4ff", ["#ffc83d", "#4cb8ff", "#f26a0f"], 80),
     ("Sky Sparkle Kids Sneakers", "kidshoe", "kids", 1490, 1890, "NEW DROP", "4.8", "#ddf7ee", ["#4cb8ff", "#ffc83d"], 50),
-    ("Pearl Heart Necklace", "necklace", "jewellery", 1190, 1490, "HOT PICK", "4.7", "#fff0f6", ["#ffd25a", "#fff"], 70),
+    ("Pearl Heart Necklace", "necklace", "jewellery", 1190, 1490, "HOT PICK", "4.7", "#fff3e8", ["#ffd25a", "#fff"], 70),
 ]
 
 
-COLORS = {"Rose": "#ff7eb6", "Lilac": "#b9a0ff", "Cream": "#fff1d6", "Sky": "#8fd3ff", "Mint": "#8fe8cf"}
+COLORS = {"Rose": "#ff7eb6", "Lilac": "#8fd3dc", "Cream": "#fff1d6", "Sky": "#8fd3ff", "Mint": "#8fe8cf"}
 SIZES = ["26", "27", "28", "29", "30"]
 # product slug -> list of (color, size, stock, price override)
 VARIANTS = {
