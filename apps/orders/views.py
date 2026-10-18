@@ -195,6 +195,15 @@ class TrackOrderView(FormView):
     template_name = "orders/track.html"
     form_class = TrackOrderForm
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        if "order" not in ctx and self.request.method == "GET" and user.is_authenticated:   # signed in: no typing needed
+            latest = Order.objects.filter(user=user).prefetch_related("items", "history", "supplier_orders").first()
+            if latest is not None:
+                ctx.update(order=latest, latest=True, parcels=[p for p in latest.supplier_orders.all() if p.tracking_code or p.tracking_link])
+        return ctx
+
     def form_valid(self, form):
         number, phone = form.cleaned_data["number"], _digits(form.cleaned_data["phone"])[-10:]
         order = Order.objects.filter(number__iexact=number).prefetch_related("items", "history", "supplier_orders").first()

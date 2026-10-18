@@ -203,3 +203,23 @@ def test_track_page_shows_courier_tracking_link_from_the_supplier(client, django
 
 def test_footer_links_to_the_public_tracking_page(client):
     assert reverse("orders:track") in client.get("/").content.decode()
+
+
+def test_signed_in_customer_sees_their_latest_order_on_the_track_page_without_typing(client, django_user_model):
+    order = _placed_order(django_user_model)
+    client.force_login(order.user)
+    html = client.get(reverse("orders:track")).content.decode()
+    assert f"Order {order.number}" in html and "Your most recent order" in html
+
+
+def test_track_page_does_not_show_other_peoples_orders_to_guests_or_other_users(client, django_user_model):
+    order = _placed_order(django_user_model)
+    assert f"Order {order.number}" not in client.get(reverse("orders:track")).content.decode()
+    other = django_user_model.objects.create_user("o2@example.com", "pass12345!x", email_verified=True)
+    client.force_login(other)
+    assert f"Order {order.number}" not in client.get(reverse("orders:track")).content.decode()
+
+
+def test_track_link_is_in_the_menu_bar_and_the_mobile_menu(client):
+    html = client.get("/").content.decode()
+    assert html.count(reverse("orders:track")) >= 3   # menu bar, mobile menu, footer

@@ -9,7 +9,7 @@
 {% include "components/form_fields.html" with form=form %}
 <button class="btn btn-dark btn-full" type="submit">Track order</button></form>
 <p class="muted center" style="margin-top:14px">Signed in? <a href="{% url 'orders:list' %}">See all your orders</a></p></div>
-{% if order %}<div class="auth-card"><h3>Order {{ order.number }}</h3><span class="status status-{{ order.status }}">{{ order.get_status_display }}</span> <span class="muted">· placed {{ order.created_at|date:"d M Y" }}</span>
+{% if order %}<div class="auth-card">{% if latest %}<p class="muted">Your most recent order. <a href="{% url 'orders:list' %}">See all your orders</a></p>{% endif %}<h3>Order {{ order.number }}</h3><span class="status status-{{ order.status }}">{{ order.get_status_display }}</span> <span class="muted">· placed {{ order.created_at|date:"d M Y" }}</span>
 <ol class="timeline">{% for h in order.history.all %}<li><b>{{ h.get_status_display }}</b><span>{{ h.created_at|date:"d M Y, h:i A" }}</span></li>{% endfor %}</ol>
 {% for p in parcels %}<p class="muted">Courier{% if p.courier_name %}: <b>{{ p.courier_name }}</b>{% endif %}{% if p.tracking_code %} · tracking <b>{{ p.tracking_code }}</b>{% endif %}{% if p.tracking_link %} · <a href="{{ p.tracking_link }}" target="_blank" rel="noopener noreferrer">Track with the courier</a>{% endif %}</p>{% empty %}{% if order.tracking_number %}<p class="muted">Tracking code: <b>{{ order.tracking_number }}</b></p>{% endif %}{% endfor %}
 <h3>Items</h3>{% include "orders/_summary.html" %}

@@ -5,6 +5,7 @@
 <a class="drawer-menu-item" href="{% url 'catalog:shop' %}">Shop all <span data-icon="arrow-right" class="tinyicon"></span></a>
 {% for c in nav_categories %}<a class="drawer-menu-item" href="{% url 'catalog:shop' %}?category={{ c.slug }}">{{ c.title }} <span data-icon="arrow-right" class="tinyicon"></span></a>{% endfor %}
 <a class="drawer-menu-item" href="{% url 'accounts:addresses' %}">My addresses <span data-icon="arrow-right" class="tinyicon"></span></a>
+<a class="drawer-menu-item" href="{% url 'orders:track' %}">Track my order <span data-icon="arrow-right" class="tinyicon"></span></a>
 <a class="drawer-menu-item" href="{% url 'orders:list' %}">My orders <span data-icon="arrow-right" class="tinyicon"></span></a>
 {% if user.is_authenticated %}<form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="drawer-menu-item" type="submit">Sign out <span data-icon="arrow-right" class="tinyicon"></span></button></form>{% else %}<a class="drawer-menu-item" href="{% url 'accounts:login' %}">Sign in <span data-icon="arrow-right" class="tinyicon"></span></a>{% endif %}
 </div></div>
