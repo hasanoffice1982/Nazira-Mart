@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load images richtext %}
+{% load images richtext seo %}
 {% block title %}{{ product.name }} — NarizMart{% endblock %}
-{% block meta_description %}{{ product.description|plain|truncatechars:150 }}{% endblock %}
+{% block seo %}{% product_seo_image product as seo_img %}{% seo_tags title=product.name description=product.description|plain image=seo_img og_type="product" product=product %}{% endblock %}
 {% block content %}
 <section class="container section"><p class="crumbs"><a href="{% url 'catalog:home' %}">Home</a> / <a href="{% url 'catalog:shop' %}?category={{ product.category.slug }}">{{ product.category.name }}</a> / {{ product.name }}</p>
 <div class="modal-grid detail-grid"><div class="detail-art-wrap"><div class="gallery" data-gallery style="background:{{ product.card_bg }}">

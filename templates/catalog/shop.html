@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Shop — NarizMart{% endblock %}
+{% load seo %}
+{% block title %}{% category_for active_category as cat %}{% if cat %}{{ cat.title }}{% else %}Shop{% endif %} — NarizMart{% endblock %}
+{% block seo %}{% category_for active_category as cat %}{% if cat %}{% seo_tags title=cat.title description=cat.description category=cat page_type="CollectionPage" %}{% else %}{% seo_tags title="Shop" description="Shop ladies fashion, bags, shoes, beauty, jewellery, toys and kids’ wear at NarizMart. Cash on delivery across Bangladesh." page_type="CollectionPage" noindex=active_category %}{% endif %}{% endblock %}
 {% block content %}
 <section class="container section" id="featured"><div id="productsSection">{% include "catalog/_products_section.html" with fragment_url="/shop/fragment/" %}</div></section>
 {% endblock %}

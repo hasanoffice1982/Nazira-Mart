@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% load seo %}
 {% block title %}Contact us — NarizMart{% endblock %}
+{% block seo %}{% seo_tags title="Contact us" description="Questions about an order, delivery or a product? Contact NarizMart by phone, WhatsApp or email." page_type="ContactPage" %}{% endblock %}
 {% block content %}
 <section class="container auth-wrap"><div class="auth-card"><h1>Contact us</h1><p class="muted">Questions about an order or a product? Send us a message and we'll reply by email.</p>
 <form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-dark btn-full" type="submit">Send message</button></form>
