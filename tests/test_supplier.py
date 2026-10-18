@@ -276,3 +276,10 @@ def test_variant_item_goes_manual_by_default_and_into_address_in_note_mode(order
     with override_settings(SUPPLIER_VARIANT_MODE="address_note"):
         assert services.send_order(order)[0].state == "sent"
     assert calls[0][2]["customer_address"].endswith("[Pink / 18]")
+
+
+@pytest.mark.django_db
+def test_admin_order_list_has_no_date_hierarchy():
+    from django.contrib import admin
+    from apps.orders.models import Order
+    assert admin.site._registry[Order].date_hierarchy is None
