@@ -18,12 +18,12 @@ from .models import SupplierOrder
 logger = logging.getLogger("apps.supplier")
 S = Order.Status
 CHAIN = [S.PENDING, S.CONFIRMED, S.PROCESSING, S.SHIPPED, S.DELIVERED]
-ZONES = {"dhaka": "Inside Dhaka", "outside": "Outside Dhaka"}   # the supplier also has "Dhaka Sub Area" (100 TK); pick it by hand if needed
+ZONES = {"dhaka": "Inside Dhaka", "sub": "Dhaka Sub Area", "outside": "Outside Dhaka"}   # exact strings the supplier API expects
 
 
 def postal_code(order: Order) -> str:
     found = re.search(r"\b(\d{4})\b", f"{order.address} {order.city}")
-    return found.group(1) if found else ("1000" if order.delivery_area == "dhaka" else "0000")
+    return found.group(1) if found else ("1000" if order.delivery_area in ("dhaka", "sub") else "0000")
 
 
 def build_payload(order: Order, partner_id: str, supplier_product_id: str, quantity: int) -> dict:

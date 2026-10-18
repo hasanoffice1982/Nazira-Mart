@@ -15,7 +15,8 @@ from apps.cart.services import delivery_charge
 from apps.catalog.models import Product
 from apps.core.models import Page, SiteSettings
 from apps.orders.models import Order
-from apps.orders.services import change_status, create_order
+from apps.orders.services import create_order
+from apps.orders.services import change_status
 from tests.helpers import inline_management
 
 User = get_user_model()
@@ -238,3 +239,26 @@ def test_fractional_delivery_charge_is_shown_exactly_in_orders_and_emails():
 def test_whole_number_prices_stay_clean(client):
     html = client.get("/shop/").content.decode()
     assert "৳2,490" in html and "৳2,490.00" not in html
+
+
+# --- Dhaka sub-area ----------------------------------------------------------------------
+def test_sub_area_has_its_own_charge_and_checkout_choice(client):
+    s = SiteSettings.load_fresh()
+    assert s.delivery_charge_sub == 100 and s.charge_for("sub") == 100 and s.charge_for("dhaka") == 60 and s.charge_for("outside") == 120
+    assert "sub" in [v for v, _ in Order.Area.choices]
+
+
+def test_sub_area_order_is_charged_100_and_sent_to_the_supplier_as_dhaka_sub_area(django_user_model):
+    from apps.supplier.services import ZONES
+
+    call_command("seed_catalog", dataset="test")
+    user = django_user_model.objects.create_user("s@example.com", "pass12345!x", email_verified=True)
+    product = Product.objects.get(slug="retro-everyday-sunglasses")
+    order = create_order(user=user, lines=[(product.pk, 0, 1)], data={**DELIVERY, "delivery_area": "sub"})
+    assert order.delivery_charge == 100 and ZONES["sub"] == "Dhaka Sub Area"
+
+
+def test_shipping_page_shows_the_sub_area_price(client):
+    set_prices(delivery_charge_sub=D("95"))
+    page = client.get(reverse("core:page", args=["shipping-delivery"])).content.decode()
+    assert "sub-area" in page.lower() and "[[" not in page

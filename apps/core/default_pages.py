@@ -34,12 +34,14 @@ We deliver across Bangladesh.
 
 ## Delivery charges
 - Inside Dhaka: [[currency]][[delivery_dhaka]]
+- Dhaka sub-area (Savar, Gazipur, Narayanganj, Keraniganj and similar): [[currency]][[delivery_sub]]
 - Outside Dhaka: [[currency]][[delivery_outside]]
 - Free delivery on orders of [[currency]][[free_delivery]] or more
 
 ## Delivery time
-- Inside Dhaka: [1–2 working days]
-- Outside Dhaka: [3–5 working days]
+- Inside Dhaka: 24–48 hours
+- Dhaka sub-area: 48–72 hours
+- Outside Dhaka: 3–5 days
 
 Delivery times start once your order is confirmed and packed. Delays can happen during holidays and bad weather.
 

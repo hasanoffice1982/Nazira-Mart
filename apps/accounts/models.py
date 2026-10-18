@@ -61,6 +61,7 @@ class User(AbstractUser):
 
 class DeliveryArea(models.TextChoices):
     DHAKA = "dhaka", "Inside Dhaka"
+    SUB = "sub", "Dhaka Sub-area"
     OUTSIDE = "outside", "Outside Dhaka"
 
 

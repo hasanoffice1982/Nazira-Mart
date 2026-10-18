@@ -18,7 +18,7 @@ class CheckoutForm(HoneypotMixin, forms.Form):
     phone = forms.CharField(max_length=20, required=False, help_text="e.g. 01712345678")
     address = forms.CharField(max_length=255, required=False, label="Street address")
     city = forms.CharField(max_length=80, required=False, label="City / District")
-    delivery_area = forms.ChoiceField(choices=Order.Area.choices, widget=forms.RadioSelect, initial=Order.Area.DHAKA, required=False)
+    delivery_area = forms.ChoiceField(choices=Order.Area.choices, widget=forms.RadioSelect, initial=Order.Area.DHAKA, required=False, help_text="Dhaka sub-area = Savar, Gazipur, Narayanganj, Keraniganj and nearby. Choose it if your area is outside the main Dhaka city.")
     notes = forms.CharField(max_length=255, required=False, label="Delivery notes (optional)")
     save_address = forms.BooleanField(required=False, label="Save this address to my address book")
     field_order = ["email", "address_choice", "full_name", "phone", "address", "city", "delivery_area", "notes", "save_address"]

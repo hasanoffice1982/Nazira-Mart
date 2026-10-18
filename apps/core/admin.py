@@ -99,7 +99,7 @@ class SiteSettingsAdmin(SortableAdminBase, RichTextAdminMixin, admin.ModelAdmin)
     inlines = [HeroSlideInline, PromoBannerInline]
     rich_fields = ("story_text", "hero_text", "promo_text", "footer_about")
     fieldsets = (
-        ("Currency & delivery pricing", {"fields": ("currency_symbol", "currency_code", "delivery_charge_dhaka", "delivery_charge_outside", "free_delivery_threshold"), "description": "These control the delivery charge added at checkout and the currency symbol everywhere. Existing orders keep the price they were placed at."}),
+        ("Currency & delivery pricing", {"fields": ("currency_symbol", "currency_code", "delivery_charge_dhaka", "delivery_charge_sub", "delivery_charge_outside", "free_delivery_threshold"), "description": "These control the delivery charge added at checkout and the currency symbol everywhere. Existing orders keep the price they were placed at."}),
         ("Announcement bar", {"fields": ("announcement", "announcement_extra")}),
         ("Story section", {"fields": ("story_label", "story_title", "story_highlight", "story_text", "story_points", "story_art", "story_image")}),
         ("Newsletter", {"fields": ("newsletter_title", "newsletter_text")}),

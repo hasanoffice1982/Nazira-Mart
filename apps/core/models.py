@@ -19,6 +19,7 @@ class SiteSettings(models.Model):
     # --- money: currency and delivery pricing (used by checkout, emails and the storefront) ---
     currency_symbol = models.CharField(max_length=6, default="৳", help_text="Shown before every price, e.g. ৳ or Tk")
     delivery_charge_dhaka = models.DecimalField("delivery charge inside Dhaka", max_digits=8, decimal_places=2, default=Decimal("60"), validators=[MinValueValidator(0)])
+    delivery_charge_sub = models.DecimalField("delivery charge Dhaka sub-area", max_digits=8, decimal_places=2, default=Decimal("100"), validators=[MinValueValidator(0)], help_text="Savar, Gazipur, Narayanganj, Keraniganj and similar areas around Dhaka (the courier charges more there).")
     delivery_charge_outside = models.DecimalField("delivery charge outside Dhaka", max_digits=8, decimal_places=2, default=Decimal("120"), validators=[MinValueValidator(0)])
     free_delivery_threshold = models.DecimalField(
         "free delivery from", max_digits=10, decimal_places=2, default=Decimal("5000"), validators=[MinValueValidator(0)],
@@ -82,7 +83,7 @@ class SiteSettings(models.Model):
 
     announcement = models.CharField(
         max_length=200, default="Cash on delivery across Bangladesh ✦ Free delivery over [[currency]][[free_delivery]]",
-        help_text="You can use [[currency]], [[delivery_dhaka]], [[delivery_outside]] and [[free_delivery]]; they follow the values above.",
+        help_text="You can use [[currency]], [[delivery_dhaka]], [[delivery_sub]], [[delivery_outside]] and [[free_delivery]]; they follow the values above.",
     )
     announcement_extra = models.CharField(max_length=120, blank=True, default="· new arrivals every week")
 
@@ -124,7 +125,7 @@ class SiteSettings(models.Model):
 
     # --- pricing helpers ---------------------------------------------------------------------------------------
     def charge_for(self, area: str) -> Decimal:
-        return self.delivery_charge_dhaka if area == "dhaka" else self.delivery_charge_outside
+        return {"dhaka": self.delivery_charge_dhaka, "sub": self.delivery_charge_sub}.get(area, self.delivery_charge_outside)
 
     def delivery_for(self, subtotal: Decimal, area: str = "dhaka") -> Decimal:
         if subtotal <= 0 or (self.free_delivery_threshold > 0 and subtotal >= self.free_delivery_threshold):
@@ -136,10 +137,11 @@ class SiteSettings(models.Model):
         return f"{value:,.0f}" if value == value.to_integral_value() else f"{value:,.2f}"
 
     def render_tokens(self, text: str) -> str:
-        """Fill [[currency]] [[delivery_dhaka]] [[delivery_outside]] [[free_delivery]] so copy always matches the real prices."""
+        """Fill [[currency]] [[delivery_dhaka]] [[delivery_sub]] [[delivery_outside]] [[free_delivery]] so copy always matches the real prices."""
         tokens = {
             "[[currency]]": self.currency_symbol,
             "[[delivery_dhaka]]": self._money(self.delivery_charge_dhaka),
+            "[[delivery_sub]]": self._money(self.delivery_charge_sub),
             "[[delivery_outside]]": self._money(self.delivery_charge_outside),
             "[[free_delivery]]": self._money(self.free_delivery_threshold) if self.free_delivery_threshold > 0 else "",
         }
@@ -223,7 +225,7 @@ class Page(models.Model):
 
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=120)
-    body = models.TextField(help_text="Use the editor toolbar. Price tokens: [[currency]] [[delivery_dhaka]] [[delivery_outside]] [[free_delivery]].")
+    body = models.TextField(help_text="Use the editor toolbar. Price tokens: [[currency]] [[delivery_dhaka]] [[delivery_sub]] [[delivery_outside]] [[free_delivery]].")
     meta_description = models.CharField(max_length=160, blank=True)
     group = models.CharField(max_length=5, choices=Group.choices, default=Group.NONE)
     position = models.PositiveSmallIntegerField(default=0)
