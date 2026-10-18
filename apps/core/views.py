@@ -37,7 +37,7 @@ class ManifestView(View):
             "display": "standalone",
             "orientation": "portrait",
             "background_color": "#ffffff",
-            "theme_color": "#101e2d",
+            "theme_color": "#0a3550",
             "icons": [
                 {"src": static("pwa/icon-192.png"), "sizes": "192x192", "type": "image/png"},
                 {"src": static("pwa/icon-512.png"), "sizes": "512x512", "type": "image/png"},
