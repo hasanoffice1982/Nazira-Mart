@@ -282,3 +282,7 @@ main{padding-bottom:64px}
 @keyframes float{50%{transform:translateY(-8px) rotate(-6deg)}}
 .hero-object,.promo-illustration svg,.promo-illustration .media-img,.story-image svg{animation-duration:7s}
 .mini-float{animation:none}
+
+/* product pictures (transparent cut-outs and normal photos) are shown whole, centred, on the category tint */
+.product-visual .media-img{object-fit:contain;padding:7%;box-sizing:border-box;border-radius:0}
+.gallery-main .media-img,.modal-art .media-img,.detail-art .media-img{object-fit:contain;padding:6%;box-sizing:border-box}
