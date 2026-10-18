@@ -1,11 +1,23 @@
+from django import forms
 from django.contrib import admin, messages
+from django.template.response import TemplateResponse
+from django.urls import path
 from django.utils.html import format_html
 
 from apps.orders.models import Order
 from apps.orders.admin import OrderAdmin
 
-from . import client, services
+from . import client, importer, services
 from .models import SupplierOrder, SupplierProduct
+
+
+class ImportForm(forms.Form):
+    include = forms.CharField(required=False, label="Only titles containing", help_text="Words separated by | e.g. baby|frock|three piece. Empty = everything.")
+    exclude = forms.CharField(required=False, label="Skip titles containing", help_text="e.g. men|islamic")
+    limit = forms.IntegerField(min_value=1, max_value=50, initial=10, label="Max new products", help_text="Keep it small: photos are downloaded and the page waits for them.")
+    preview = forms.BooleanField(required=False, initial=True, label="Preview only", help_text="Show what would be imported, change nothing.")
+    refresh_only = forms.BooleanField(required=False, label="Only refresh price and stock", help_text="Do not add new products.")
+    activate = forms.BooleanField(required=False, label="Make new products visible at once", help_text="Leave off to review them first.")
 
 
 @admin.register(SupplierProduct)
@@ -14,6 +26,31 @@ class SupplierProductAdmin(admin.ModelAdmin):
     search_fields = ("supplier_product_id", "product__name")
     readonly_fields = ("last_synced",)
     autocomplete_fields = ()
+
+    def get_urls(self):
+        return [path("import/", self.admin_site.admin_view(self.import_view), name="supplier_supplierproduct_import"), *super().get_urls()]
+
+    def import_view(self, request):
+        context = {**self.admin_site.each_context(request), "title": "Import from supplier", "opts": self.model._meta}
+        form = ImportForm(request.POST or None)
+        context["form"] = form
+        if not self.has_change_permission(request):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        if request.method == "POST" and form.is_valid():
+            d = form.cleaned_data
+            if not client.configured():
+                context["error"] = "Supplier keys are not set on the server."
+            else:
+                try:
+                    context["report"] = importer.sync(
+                        include=d["include"], exclude=d["exclude"], limit=d["limit"], activate=d["activate"],
+                        dry_run=d["preview"], create_new=not d["refresh_only"],
+                    )
+                    context["dry_run"] = d["preview"]
+                except client.SupplierError as exc:
+                    context["error"] = str(exc)
+        return TemplateResponse(request, "admin/supplier/supplierproduct/import.html", context)
 
 
 @admin.register(SupplierOrder)

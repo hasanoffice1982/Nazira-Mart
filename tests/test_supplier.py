@@ -283,3 +283,25 @@ def test_admin_order_list_has_no_date_hierarchy():
     from django.contrib import admin
     from apps.orders.models import Order
     assert admin.site._registry[Order].date_hierarchy is None
+
+
+@pytest.mark.django_db
+def test_admin_import_page_previews_and_creates(client, django_user_model, monkeypatch, settings):
+    from django.test import override_settings
+    admin = django_user_model.objects.create_superuser("adm@example.com", "pass12345!x")
+    admin.email_verified = True
+    admin.save()
+    client.force_login(admin)
+    session = client.session
+    session["2fa_verified"] = True
+    session.save()
+    item = {"product_id": "7001", "title": "Baby girls frock", "description": "Size: 16, 18", "final_selling_price": 666, "base_price": 500, "stock": 5, "is_active": 1}
+    monkeypatch.setattr(importer.client, "products", lambda: [item])
+    monkeypatch.setattr(importer.client, "configured", lambda: True)
+    url = "/" + settings.ADMIN_URL + "supplier/supplierproduct/import/"
+    r0 = client.get(url)
+    assert r0.status_code == 200, r0.headers.get("Location")
+    r = client.post(url, {"limit": 10, "preview": "on", "include": "frock"})
+    assert b"Preview" in r.content and not Product.objects.filter(sku="7001").exists()
+    client.post(url, {"limit": 10, "include": "frock"})
+    assert Product.objects.get(sku="7001").variants.count() == 2
