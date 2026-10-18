@@ -24,8 +24,12 @@ git reset --hard "origin/$BRANCH"               # the clone is deploy-only: neve
 
 # copy only what the live site needs (tests, docs, CI, sample data stay out)
 for d in apps config templates static; do
-  rsync -a --delete --exclude '__pycache__' "$d/" "$APP/$d/"   # --delete drops files removed from the repo
+  rm -rf "$APP/$d.new"
+  cp -R "$d" "$APP/$d.new"                       # copy first, then swap, so files removed from the repo disappear too
+  rm -rf "$APP/$d"
+  mv "$APP/$d.new" "$APP/$d"
 done
+find "$APP" -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 cp manage.py passenger_wsgi.py requirements-cpanel.txt "$APP/"
 
 # the Python App's virtualenv (cPanel puts it under ~/virtualenv/<app root>/<python version>/)
