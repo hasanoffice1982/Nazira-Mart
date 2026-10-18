@@ -29,9 +29,10 @@ class SiteSettings(models.Model):
     # --- page layout: try both and keep the one you like ---
     layout_mode = models.CharField("Page width", max_length=5, default="wide", choices=[
         ("wide", "Wide: full screen width with space on each side"),
-        ("boxed", "Boxed: centered, at most 1336 px wide"),
+        ("boxed", "Boxed: centered column (width set below)"),
     ], help_text="Wide fills big screens. Boxed keeps the content in a centered column. Save, then refresh the shop to compare.")
     layout_side_padding = models.PositiveSmallIntegerField("Side space in wide mode (px)", default=96, validators=[MinValueValidator(16), MaxValueValidator(220)], help_text="Space on the left and right of the page on big screens (90–100 looks balanced). Smaller screens shrink it by themselves.")
+    layout_box_width = models.PositiveSmallIntegerField("Box width in boxed mode (px)", default=1336, validators=[MinValueValidator(1000), MaxValueValidator(2400)], help_text="Width of the centered column. 1336 is the classic size; try 1500–1700 for a roomier page. Only used when Page width is Boxed.")
     layout_hero_height = models.CharField("Home banner height", max_length=7, default="normal", choices=[
         ("compact", "Compact (shorter)"), ("normal", "Normal"), ("tall", "Tall (bigger picture)"),
     ])
