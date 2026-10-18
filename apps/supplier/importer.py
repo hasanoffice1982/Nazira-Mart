@@ -22,6 +22,7 @@ from apps.catalog.models import Category, Product, ProductImage
 
 from . import client
 from .models import SupplierProduct
+from .variants import create_variants, refresh_stock
 
 logger = logging.getLogger("apps.supplier")
 
@@ -150,6 +151,8 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
                 changed.append("is_active")
             if changed:
                 product.save(update_fields=changed)
+            if "stock" in changed:
+                refresh_stock(product, stock)
             link.base_price, link.commission, link.final_price, link.supplier_stock = _dec(item.get("base_price")), _dec(item.get("partner_commission")), price, max(stock, 0)
             link.save()
             report.updated += 1
@@ -185,6 +188,7 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
                 product=product, supplier_product_id=sid, base_price=_dec(item.get("base_price")), commission=_dec(item.get("partner_commission")),
                 final_price=price, supplier_stock=max(stock, 0),
             )
+            create_variants(product, product.description, stock)
         if photos:
             _add_photos(product, item, report)
         report.created += 1
