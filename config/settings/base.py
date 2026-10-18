@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.wishlist",
     "apps.cart",
     "apps.orders",
+    "apps.supplier",
 ]
 
 MIDDLEWARE = [
@@ -308,3 +309,19 @@ LOGGING = {
         "apps": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
 }
+
+
+# --- supplier (dropshipping API) ---
+# Keys come ONLY from the environment / .env (never commit them). Empty keys = the integration is switched off.
+SUPPLIER_API_BASE = env("SUPPLIER_API_BASE", default="https://rsmtechworld.com/api/v1/dropshopbdstore")
+SUPPLIER_API_KEY = env("SUPPLIER_API_KEY", default="")
+SUPPLIER_API_SECRET = env("SUPPLIER_API_SECRET", default="")
+SUPPLIER_WEBHOOK_TOKEN = env("SUPPLIER_WEBHOOK_TOKEN", default="")   # secret part of the webhook URL: /supplier/webhook/<token>/
+SUPPLIER_AUTO_SEND = env.bool("SUPPLIER_AUTO_SEND", default=False)   # send the order when staff mark it Confirmed
+SUPPLIER_SEND_QUANTITY = env.bool("SUPPLIER_SEND_QUANTITY", default=False)  # only if the supplier API accepts a quantity field
+SUPPLIER_TIMEOUT = env.int("SUPPLIER_TIMEOUT", default=20)
+# Paths are overridable because the public docs show only /balance explicitly (check with `manage.py supplier_check`)
+SUPPLIER_PATH_BALANCE = env("SUPPLIER_PATH_BALANCE", default="/balance")
+SUPPLIER_PATH_PRODUCTS = env("SUPPLIER_PATH_PRODUCTS", default="/products")
+SUPPLIER_PATH_ORDERS = env("SUPPLIER_PATH_ORDERS", default="/orders")
+SUPPLIER_PATH_STATUS = env("SUPPLIER_PATH_STATUS", default="/orders/{id}/status")

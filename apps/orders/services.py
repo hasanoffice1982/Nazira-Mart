@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from decimal import Decimal
 
 from django.db import transaction
@@ -131,6 +133,17 @@ def change_status(order: Order, new_status: str, *, note: str = "", by=None) -> 
     record_status(order, new_status, note=note, by=by)
     by_customer = bool(by and by.pk == order.user_id and not by.is_staff)
     transaction.on_commit(lambda: send_status_email(order.pk, str(new_status), by_customer=by_customer))
+    transaction.on_commit(lambda: _supplier_hook(order.pk, str(new_status)))
+
+
+def _supplier_hook(order_id: int, status: str) -> None:
+    """Hand a confirmed order to the supplier integration (does nothing unless it is switched on)."""
+    from apps.supplier.services import on_status_change
+
+    try:
+        on_status_change(order_id, status)
+    except Exception:  # noqa: BLE001  a supplier problem must never break the shop
+        logging.getLogger("apps.supplier").exception("supplier hook failed for order id %s", order_id)
 
 
 def restore_stock(order: Order) -> None:

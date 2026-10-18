@@ -1,0 +1,171 @@
+import json
+from decimal import Decimal
+
+import pytest
+from django.core.management import call_command
+from django.test import override_settings
+
+from apps.catalog.models import Product
+from apps.orders.models import Order
+from apps.orders.services import change_status, create_order
+from apps.supplier import client, importer, services
+from apps.supplier.models import SupplierOrder, SupplierProduct
+
+pytestmark = pytest.mark.django_db
+DELIVERY = {"full_name": "Rafi", "phone": "01712345678", "address": "House 1, Mirpur 1216", "city": "Dhaka", "delivery_area": "dhaka"}
+KEYS = {"SUPPLIER_API_KEY": "k", "SUPPLIER_API_SECRET": "s"}
+
+
+@pytest.fixture
+def order(django_user_model):
+    call_command("seed_catalog", dataset="test")
+    user = django_user_model.objects.create_user("u@example.com", "pass12345!x", email_verified=True)
+    product = Product.objects.get(slug="retro-everyday-sunglasses")
+    SupplierProduct.objects.create(product=product, supplier_product_id="VND-105")
+    return create_order(user=user, lines=[(product.pk, 0, 1)], data=DELIVERY)
+
+
+@pytest.fixture
+def calls(monkeypatch):
+    sent = []
+
+    def fake(method, path, payload=None):
+        sent.append((method, path, payload))
+        return {"success": True, "order_details": {"system_order_id": "API-1", "status": "New"}}
+
+    monkeypatch.setattr(client, "call", fake)
+    return sent
+
+
+@override_settings(**KEYS)
+def test_send_order_uses_supplier_product_id_zone_postal_and_no_price(order, calls):
+    parcels = services.send_order(order)
+    assert [p.state for p in parcels] == ["sent"] and parcels[0].supplier_order_id == "API-1"
+    payload = calls[0][2]
+    assert payload["product_id"] == "VND-105" and payload["city_or_zone"] == "Inside Dhaka" and payload["postal_code"] == "1216"
+    assert payload["payment_method"] == "Cash on Delivery" and payload["partner_order_id"] == order.number
+    assert not {"price", "amount", "total"} & payload.keys()
+
+
+@override_settings(**KEYS)
+def test_sending_twice_does_not_create_a_second_parcel(order, calls):
+    services.send_order(order)
+    services.send_order(order)
+    assert len(calls) == 1 and SupplierOrder.objects.count() == 1
+
+
+@override_settings(**KEYS)
+def test_failure_is_recorded_and_can_be_retried(order, monkeypatch):
+    def boom(*a, **k):
+        raise client.SupplierError("HTTP 403: IP blocked")
+
+    monkeypatch.setattr(client, "call", boom)
+    (parcel,) = services.send_order(order)
+    assert parcel.state == "failed" and "IP blocked" in parcel.error
+    monkeypatch.setattr(client, "call", lambda *a, **k: {"order_details": {"system_order_id": "API-9", "status": "New"}})
+    (parcel,) = services.send_order(order)
+    assert parcel.state == "sent" and parcel.error == ""
+
+
+@override_settings(**KEYS)
+def test_quantity_over_one_needs_a_manual_order(django_user_model, calls):
+    call_command("seed_catalog", dataset="test")
+    product = Product.objects.get(slug="retro-everyday-sunglasses")
+    SupplierProduct.objects.create(product=product, supplier_product_id="VND-1")
+    user = django_user_model.objects.create_user("q@example.com", "pass12345!x", email_verified=True)
+    o = create_order(user=user, lines=[(product.pk, 0, 2)], data=DELIVERY)
+    (parcel,) = services.send_order(o)
+    assert parcel.state == "manual" and not calls
+
+
+@override_settings(SUPPLIER_AUTO_SEND=True, **KEYS)
+def test_confirming_an_order_sends_it_automatically(order, calls, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True):
+        change_status(order, Order.Status.CONFIRMED)
+    assert len(calls) == 1
+
+
+@override_settings(SUPPLIER_AUTO_SEND=False, **KEYS)
+def test_auto_send_is_off_by_default(order, calls, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True):
+        change_status(order, Order.Status.CONFIRMED)
+    assert calls == []
+
+
+def test_without_keys_nothing_is_sent(order, calls, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True):
+        change_status(order, Order.Status.CONFIRMED)
+    assert calls == []
+
+
+@override_settings(SUPPLIER_WEBHOOK_TOKEN="tok123", **KEYS)
+def test_webhook_flow_shipped_then_delivered_then_wrong_token(order, calls, client):
+    change_status(order, Order.Status.CONFIRMED)
+    services.send_order(order)
+    url = "/supplier/webhook/tok123/"
+    body = {"event": "order.status_updated", "partner_order_id": order.number, "new_status": "Shipped", "courier_name": "Steadfast",
+            "tracking_code": "ST-1", "tracking_link": "https://steadfast.com.bd/track/ST-1"}
+    r = client.post(url, json.dumps(body), content_type="application/json")
+    order.refresh_from_db()
+    assert r.status_code == 200 and order.status == "shipped" and order.tracking_number == "ST-1"
+    client.post(url, json.dumps({**body, "new_status": "Delivered"}), content_type="application/json")
+    order.refresh_from_db()
+    assert order.status == "delivered" and order.payment_status == "paid"
+    assert client.post("/supplier/webhook/wrong/", json.dumps(body), content_type="application/json").status_code == 404
+
+
+@override_settings(SUPPLIER_WEBHOOK_TOKEN="tok123", **KEYS)
+def test_webhook_refused_parcel_becomes_returned(order, calls, client):
+    change_status(order, Order.Status.CONFIRMED)
+    services.send_order(order)
+    body = {"event": "order.status_updated", "partner_order_id": order.number}
+    for st in ("Shipped", "Returned"):
+        client.post("/supplier/webhook/tok123/", json.dumps({**body, "new_status": st}), content_type="application/json")
+    order.refresh_from_db()
+    assert order.status == "returned"
+
+
+def test_webhook_is_off_without_a_token(client):
+    assert client.post("/supplier/webhook//", "{}", content_type="application/json").status_code == 404
+    assert client.get("/supplier/webhook/x/").status_code == 405
+
+
+ITEMS = [
+    {"product_id": "VND-1", "title": "Elegant Pastel Pink Pearl Statement Earrings", "description": "<p>Nice</p>", "thumbnail": "", "images": "[]",
+     "base_price": 150, "partner_commission": 95, "final_selling_price": 245, "stock": 20, "is_active": 1},
+    {"product_id": "VND-2", "title": "Cute Hello Kitty Printed Pink Girls Two-Piece Set", "final_selling_price": 389, "stock": 9, "is_active": 1},
+    {"product_id": "VND-3", "title": "Rolex Quartz Movement Stainless Steel Analog Watch for Men", "final_selling_price": 722, "stock": 9, "is_active": 1},
+    {"product_id": "VND-4", "title": "Smart toy car sold out", "final_selling_price": 433, "stock": 0, "is_active": 1},
+]
+
+
+def test_import_creates_hidden_products_in_guessed_categories_and_skips_the_rest():
+    call_command("seed_catalog")
+    report = importer.sync(items=ITEMS, photos=False)
+    assert (report.created, report.skipped) == (2, 2)
+    earrings = Product.objects.get(sku="VND-1")
+    assert earrings.is_active is False and earrings.price == Decimal("245.00") and earrings.category.slug == "jewellery"
+    assert Product.objects.get(sku="VND-2").category.slug == "kids"
+
+
+def test_import_twice_only_refreshes_price_and_stock_and_keeps_edits():
+    call_command("seed_catalog")
+    importer.sync(items=ITEMS, photos=False)
+    Product.objects.filter(sku="VND-1").update(name="My own name", is_active=True)
+    changed = [{**ITEMS[0], "final_selling_price": 299, "stock": 5}]
+    report = importer.sync(items=changed, photos=False)
+    p = Product.objects.get(sku="VND-1")
+    assert report.updated == 1 and report.created == 0
+    assert (p.price, p.stock, p.name, p.is_active) == (Decimal("299.00"), 5, "My own name", True)
+
+
+def test_dry_run_changes_nothing():
+    call_command("seed_catalog")
+    before = Product.objects.count()
+    report = importer.sync(items=ITEMS, photos=False, dry_run=True)
+    assert report.created == 2 and Product.objects.count() == before
+
+
+def test_image_urls_resolve_relative_names_next_to_the_thumbnail():
+    urls = importer.image_urls({"thumbnail": "https://x.test/uploads/t.jpg", "images": '["a.jpg","b.jpg"]'})
+    assert urls == ["https://x.test/uploads/t.jpg", "https://x.test/uploads/a.jpg", "https://x.test/uploads/b.jpg"]
