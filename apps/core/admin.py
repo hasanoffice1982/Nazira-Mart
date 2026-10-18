@@ -18,6 +18,8 @@ class SiteSettingsForm(forms.ModelForm):
     meta_pixel_id = _field("Meta (Facebook) Pixel", "Paste your Pixel ID (e.g. 123456789012345) or the whole code from Events Manager. Empty = off.")
     google_tag_id = _field("Google tag", "Paste your Google Analytics (G-…), Google Ads (AW-…) or Tag Manager (GTM-…) ID, or the whole code. Empty = off.")
 
+    tiktok_pixel_id = _field("TikTok Pixel", "Paste your TikTok Pixel ID (from TikTok Ads Manager > Events) or the whole code. Empty = off.")
+    tiktok_domain_verification = _field("TikTok domain verification", "Paste the whole <meta> tag TikTok gives you, or just its content code. Empty = off.", rows=1)
     google_site_verification = _field("Google Search Console verification", "Paste the whole <meta> tag Google gives you, or just its content code. Empty = off.", rows=1)
     meta_domain_verification = _field("Meta domain verification", "Paste the whole <meta> tag Meta gives you, or just its content code. Empty = off.", rows=1)
 
@@ -40,6 +42,18 @@ class SiteSettingsForm(forms.ModelForm):
 
     def clean_meta_domain_verification(self):
         return self._verification_code(self.cleaned_data["meta_domain_verification"], "Meta")
+
+    def clean_tiktok_domain_verification(self):
+        return self._verification_code(self.cleaned_data["tiktok_domain_verification"], "TikTok")
+
+    def clean_tiktok_pixel_id(self):
+        raw = self.cleaned_data["tiktok_pixel_id"].strip()
+        if not raw:
+            return ""
+        found = re.search(r"ttq\.load\(\s*['\"]([A-Za-z0-9]{10,30})['\"]", raw) or re.fullmatch(r"([A-Za-z0-9]{10,30})", raw)
+        if not found:
+            raise forms.ValidationError("Couldn't find a TikTok Pixel ID in that. It looks like C1234567890ABCDEFGHI.")
+        return found.group(1)
 
     def clean_meta_pixel_id(self):
         raw = self.cleaned_data["meta_pixel_id"].strip()
@@ -103,7 +117,7 @@ class SiteSettingsAdmin(SortableAdminBase, RichTextAdminMixin, admin.ModelAdmin)
         ("Announcement bar", {"fields": ("announcement", "announcement_extra")}),
         ("Story section", {"fields": ("story_label", "story_title", "story_highlight", "story_text", "story_points", "story_art", "story_image")}),
         ("Newsletter", {"fields": ("newsletter_title", "newsletter_text")}),
-        ("Advertising & tracking codes", {"fields": ("meta_pixel_id", "google_tag_id", "track_shopping_events", "google_site_verification", "meta_domain_verification"), "description": "Paste your codes here; no code changes needed. The site loads them on every page and sends shopping events (view product, add to cart, checkout, purchase). Test with Meta Pixel Helper or Google Tag Assistant."}),
+        ("Advertising & tracking codes", {"fields": ("meta_pixel_id", "tiktok_pixel_id", "google_tag_id", "track_shopping_events", "google_site_verification", "meta_domain_verification", "tiktok_domain_verification"), "description": "Paste your codes here; no code changes needed. The site loads them on every page and sends shopping events (view product, add to cart, checkout, purchase). Test with Meta Pixel Helper or Google Tag Assistant."}),
         ("Photo limits", {"fields": ("max_photos_per_product", "bulk_upload_max_files"), "description": "How many photos can be listed per product in a CSV import, and sent in one bulk upload. Each photo is up to 5 MB and is compressed automatically."}),
         ("Slider speed", {"fields": ("hero_slider_seconds", "promo_slider_seconds"), "description": "How fast the home banner and the promo banners slide by themselves (0 = they do not slide by themselves). Add or change the slides in the Hero slides and Promo banners tabs."}),
         ("Popular products section", {"fields": ("show_popular", "popular_mode", "popular_count", "popular_fallback_count", "popular_days", "popular_label", "popular_title", "popular_subtitle"), "description": "Shown on the home page between the categories and the product grid."}),
@@ -112,7 +126,7 @@ class SiteSettingsAdmin(SortableAdminBase, RichTextAdminMixin, admin.ModelAdmin)
             "categories_label", "categories_title", "categories_subtitle", "view_all_label",
             "products_label", "products_title", "products_subtitle")}),
         ("Footer & contact", {"fields": ("company_name", "footer_about", "footer_contact_text", "contact_email", "contact_phone", "contact_address", "footer_tagline")}),
-        ("Social links", {"fields": ("facebook_url", "instagram_url", "youtube_url", "linkedin_url"), "description": "Only links you fill in appear in the footer, as icons."}),
+        ("Social links", {"fields": ("facebook_url", "instagram_url", "tiktok_url", "youtube_url", "linkedin_url"), "description": "Only links you fill in appear in the footer, as icons."}),
     )
 
     def has_add_permission(self, request):

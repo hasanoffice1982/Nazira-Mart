@@ -196,3 +196,39 @@ def test_verification_accepts_full_meta_tag_or_code(pasted, expected):
 def test_bad_verification_text_is_rejected():
     f = form(google_site_verification="<script>alert(1)</script>")
     assert not f.is_valid() and "google_site_verification" in f.errors
+
+
+# ---- TikTok --------------------------------------------------------------------------------------------------------
+def test_tiktok_pixel_is_off_until_set_and_adds_only_its_own_csp_sources(client):
+    html = client.get("/").content.decode()
+    assert "data-tiktok" not in html and "analytics.tiktok.com" not in client.get("/")["Content-Security-Policy"]
+    site(tiktok_pixel_id="C1234567890ABCDEFGHI")
+    cache.clear()
+    resp = client.get("/")
+    assert 'data-tiktok="C1234567890ABCDEFGHI"' in resp.content.decode()
+    assert "https://analytics.tiktok.com" in resp["Content-Security-Policy"] and "connect.facebook.net" not in resp["Content-Security-Policy"]
+
+
+def test_tiktok_pixel_id_can_be_pasted_as_the_whole_snippet_or_rejected():
+    def form(value):
+        f = SiteSettingsForm(data={"tiktok_pixel_id": value})
+        f.is_valid()
+        return f
+
+    assert form("ttq.load('C1234567890ABCDEFGHI'); ttq.page();").cleaned_data["tiktok_pixel_id"] == "C1234567890ABCDEFGHI"
+    assert form("C1234567890ABCDEFGHI").cleaned_data["tiktok_pixel_id"] == "C1234567890ABCDEFGHI"
+    assert "tiktok_pixel_id" in form("not a pixel!").errors
+
+
+def test_tiktok_verification_meta_and_profile_link_appear(client):
+    site(tiktok_domain_verification="abcdEFGH1234ijkl", tiktok_url="https://www.tiktok.com/@narizmart")
+    cache.clear()
+    html = client.get("/").content.decode()
+    assert '<meta name="tiktok-developers-site-verification" content="abcdEFGH1234ijkl">' in html
+    assert 'href="https://www.tiktok.com/@narizmart"' in html and "https://www.tiktok.com/@narizmart" in html.split('application/ld+json')[1]
+
+
+def test_tiktok_events_use_tiktok_names_in_the_script():
+    js = open("static/js/tracking.js", encoding="utf-8").read()
+    for pair in ("view_item: 'ViewContent'", "add_to_cart: 'AddToCart'", "begin_checkout: 'InitiateCheckout'", "purchase: 'CompletePayment'"):
+        assert pair in js
