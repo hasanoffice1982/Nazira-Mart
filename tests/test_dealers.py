@@ -56,6 +56,7 @@ def test_confirming_sends_the_dealers_items_with_cod_and_reference(setup, posts,
     assert len(posts) == 1
     name, payload = posts[0]
     assert name == "Rahim Traders" and payload["event"] == "order.confirmed"
+    assert payload["dealer"] == {"id": dealer.pk, "name": "Rahim Traders", "phone": "", "email": ""}
     assert payload["reference"] == f"{order.number}-{dealer.pk}" and payload["cod_amount"] == str(order.total)
     assert payload["items"][0]["sku"] == product.sku and payload["customer"]["phone"] == "01712345678"
     assert payload["callback_url"].endswith(f"/dealer/webhook/{dealer.token}/")
