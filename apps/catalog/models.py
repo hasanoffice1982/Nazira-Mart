@@ -82,6 +82,7 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_gift = models.BooleanField("Gift idea", default=False, help_text="Shows this product in Shop All > Gift ideas.")
+    dealer = models.ForeignKey("dealers.Dealer", null=True, blank=True, on_delete=models.SET_NULL, related_name="products", help_text="Who ships this product. Leave empty for dropship-supplier products (linked by the API) and for stock you keep yourself.")
     is_popular_pick = models.BooleanField("Pin to Popular products", default=False, help_text="Shows this product in the home page Popular products section (see Site settings for how pins and best sellers mix)")
     popular_order = models.PositiveSmallIntegerField("Pin order", default=100, help_text="Lower numbers come first among pinned products")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -118,6 +119,15 @@ class Product(models.Model):
     @property
     def has_variants(self) -> bool:
         return bool(self.active_variants)
+
+    @property
+    def fulfilment(self) -> tuple[str, str]:
+        """(kind, label): who ships it. Dropship products are linked to the supplier API; dealer products name their dealer; the rest is own stock."""
+        if hasattr(self, "supplier_link"):
+            return "dropship", "Dropship"
+        if self.dealer_id:
+            return "dealer", f"Dealer: {self.dealer.name}"
+        return "own", "Own stock"
 
     @property
     def total_stock(self) -> int:

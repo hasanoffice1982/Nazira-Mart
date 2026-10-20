@@ -136,6 +136,13 @@ def sync(*, items: list[dict] | None = None, include: str = "", exclude: str = "
             continue
         stock = int(item.get("stock") or 0)
         link = existing.get(sid)
+        if link is None and str(item.get("system_id") or "") in existing:   # linked from a CSV with the numeric id: correct it to the API's real product_id
+            old_id = str(item.get("system_id"))
+            link = existing.pop(old_id)
+            if not dry_run:
+                link.supplier_product_id = sid[:40]
+                link.save()
+            existing[sid] = link
         mine = by_sku.get(sid) or by_sku.get(str(item.get("system_id") or ""))   # CSV SKU may be the supplier's product_id or its numeric system id
         if link is None and mine is not None:   # connect the CSV-uploaded product instead of creating a duplicate; orders always use product_id
             if not dry_run:

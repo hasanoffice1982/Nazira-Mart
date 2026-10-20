@@ -126,9 +126,9 @@ MAX_BULK_BYTES = 100 * 1024 * 1024   # Nginx and Cloudflare cap one request at a
 class ProductAdmin(RichTextAdminMixin, admin.ModelAdmin):
     rich_fields = ("description",)
     change_list_template = "admin/catalog/product/change_list.html"
-    list_display = ("thumb", "name", "sku", "category", "price", "variant_count", "stock_total", "stock_flag", "is_gift", "is_popular_pick", "is_active")
+    list_display = ("thumb", "name", "sku", "category", "ships_from", "price", "variant_count", "stock_total", "stock_flag", "is_gift", "is_popular_pick", "is_active")
     list_display_links = ("thumb", "name")
-    list_filter = ("category", "is_active", "is_gift", "is_popular_pick")
+    list_filter = ("category", "is_active", "is_gift", "is_popular_pick")   # + "who ships it" is added by apps.dealers.admin
     list_editable = ("price", "is_gift", "is_popular_pick", "is_active")
     search_fields = ("name", "sku", "variants__sku")
     prepopulated_fields = {"slug": ("name",)}
@@ -138,6 +138,7 @@ class ProductAdmin(RichTextAdminMixin, admin.ModelAdmin):
     change_form_template = "admin/catalog/product/change_form.html"
     fieldsets = (
         ("Basics", {"fields": ("name", "slug", "sku", "category", "description")}),
+        ("Who ships it", {"fields": ("dealer",), "description": "Choose a dealer if one of your own dealers ships this product (orders go to their automation). Leave empty for dropship-supplier products (linked by the API) and for stock you keep yourself."}),
         ("Pricing & stock", {"fields": ("price", "old_price", "badge", "stock", "is_active"), "description": "Stock here applies only to products without variants. With variants, stock is managed per variant below."}),
         ("Collections", {"fields": ("is_gift",), "description": "Tick to list this product under Shop All > Gift ideas. New arrivals (newest first) and Discounted (old price above price) fill themselves."}),
         ("Home page: Popular products", {"fields": ("is_popular_pick", "popular_order"), "description": "Pin this product to the home page Popular products section. Products that sell well are added there automatically."}),
@@ -145,7 +146,13 @@ class ProductAdmin(RichTextAdminMixin, admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("variants", "images")
+        return super().get_queryset(request).select_related("dealer", "supplier_link").prefetch_related("variants", "images")
+
+    @admin.display(description="Ships from")
+    def ships_from(self, obj):
+        kind, label = obj.fulfilment
+        css = {"dropship": "badge-info", "dealer": "badge-warning", "own": "badge-secondary"}[kind]
+        return format_html('<span class="badge {}">{}</span>', css, label)
 
     @admin.display(description="")
     def thumb(self, obj):

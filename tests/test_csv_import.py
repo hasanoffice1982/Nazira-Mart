@@ -15,7 +15,7 @@ User = get_user_model()
 pytestmark = pytest.mark.django_db
 IMPORT = "admin:catalog_product_import"
 CONFIRM = "admin:catalog_product_import_confirm"
-HEAD = ",".join(importer.COLUMNS)
+HEAD = ",".join(importer.DEMO_COLUMNS)   # the demo file (supplier_id is an optional extra column for dropship rows)
 
 
 @pytest.fixture(autouse=True)
@@ -45,7 +45,7 @@ def make_csv(rows):
 
 
 def row(**kw):
-    return {"name": "Test Tee", "category": "Fashion", "price": "500", **kw}
+    return {"name": "Test Tee", "category": "Fashion", "price": "500", "ships_from": "own", **kw}
 
 
 def upload(client, data, name="products.csv", **post):
