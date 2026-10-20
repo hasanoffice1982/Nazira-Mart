@@ -369,8 +369,9 @@ body.hero-compact .hero-stage{transform:scale(.88);transform-origin:right bottom
 @media(max-width:820px){.hero-slide{min-height:0!important}.hero,.hero-right{min-height:0}.hero-text{padding-top:34px;padding-bottom:0}body.hero-tall .hero-stage,body.hero-compact .hero-stage{transform:scale(.73)}}
 @media(max-width:600px){.hero-slide{min-height:0!important}}
 
-/* product photo zoom on hover (see initZoom in fx3d.js) */
+/* product photo zoom on hover (see initZoom in fx3d.js): only the photo on screen is magnified, and it never spills outside its own slide */
 .gallery-main.zoomable{cursor:zoom-in}
-.gallery-main.zoomable .media-img{transition:transform .18s ease-out;will-change:transform}
-.gallery-main.zoomable.is-zooming .media-img{transform:scale(2.1);transform-origin:var(--zx,50%) var(--zy,50%)}
-.gallery-main.zoomable.is-zooming .swiper-button-prev,.gallery-main.zoomable.is-zooming .swiper-button-next{opacity:0}
+.gallery-main.zoomable .swiper-slide,.gallery-main.zoomable .gallery-single{overflow:hidden}
+.gallery-main.zoomable .media-img{transition:transform .18s ease-out}
+.gallery-main.zoomable.is-zooming .swiper-slide-active .media-img,.gallery-main.zoomable.is-zooming .gallery-single .media-img{transform:scale(2.1);transform-origin:var(--zx,50%) var(--zy,50%)}
+.gallery-main.zoomable .swiper-button-prev,.gallery-main.zoomable .swiper-button-next,.gallery-main.zoomable .swiper-pagination{z-index:5;cursor:pointer}

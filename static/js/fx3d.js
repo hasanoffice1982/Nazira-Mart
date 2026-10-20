@@ -79,7 +79,7 @@
       box.dataset.zoom = '1';
       box.classList.add('zoomable');
       box.addEventListener('pointermove', (e) => {
-        if (e.pointerType !== 'mouse' || e.buttons) { box.classList.remove('is-zooming'); return; }   // dragging the slider is not zooming
+        if (e.pointerType !== 'mouse' || e.buttons || e.target.closest('.swiper-button-prev,.swiper-button-next,.swiper-pagination')) { box.classList.remove('is-zooming'); return; }   // dragging, or pointing at an arrow or dot, is not zooming
         const r = box.getBoundingClientRect();
         box.style.setProperty('--zx', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
         box.style.setProperty('--zy', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
