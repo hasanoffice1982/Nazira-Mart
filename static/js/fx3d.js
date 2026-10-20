@@ -71,11 +71,30 @@
     });
   }
 
+  // Product page: the photo magnifies under the mouse and follows it (desktop only; touch screens keep the normal swipe gallery)
+  function initZoom() {
+    if (!fine) return;
+    document.querySelectorAll('.detail-art-wrap .gallery-main').forEach((box) => {
+      if (box.dataset.zoom) return;
+      box.dataset.zoom = '1';
+      box.classList.add('zoomable');
+      box.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse' || e.buttons) { box.classList.remove('is-zooming'); return; }   // dragging the slider is not zooming
+        const r = box.getBoundingClientRect();
+        box.style.setProperty('--zx', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
+        box.style.setProperty('--zy', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
+        box.classList.add('is-zooming');
+      });
+      box.addEventListener('pointerleave', () => box.classList.remove('is-zooming'));
+    });
+  }
+
   const start = () => {
     initNavDrop();
+    initZoom();
     watchCart();
     scan();
-    document.body.addEventListener('htmx:afterSwap', (e) => scan(e.target));
+    document.body.addEventListener('htmx:afterSwap', (e) => { scan(e.target); initZoom(); });
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
