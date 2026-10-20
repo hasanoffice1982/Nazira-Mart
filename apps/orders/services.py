@@ -135,6 +135,7 @@ def change_status(order: Order, new_status: str, *, note: str = "", by=None) -> 
     by_customer = bool(by and by.pk == order.user_id and not by.is_staff)
     transaction.on_commit(lambda: send_status_email(order.pk, str(new_status), by_customer=by_customer))
     transaction.on_commit(lambda: _supplier_hook(order.pk, str(new_status)))
+    transaction.on_commit(lambda: _dealer_hook(order.pk, str(new_status)))
 
 
 def _supplier_hook(order_id: int, status: str) -> None:
@@ -145,6 +146,16 @@ def _supplier_hook(order_id: int, status: str) -> None:
         on_status_change(order_id, status)
     except Exception:  # noqa: BLE001  a supplier problem must never break the shop
         logging.getLogger("apps.supplier").exception("supplier hook failed for order id %s", order_id)
+
+
+def _dealer_hook(order_id: int, status: str) -> None:
+    """Hand dealer items of a confirmed order to the dealer's automation (n8n / Make)."""
+    from apps.dealers.services import on_status_change
+
+    try:
+        on_status_change(order_id, status)
+    except Exception:  # noqa: BLE001  a dealer problem must never break the shop
+        logging.getLogger("apps.dealers").exception("dealer hook failed for order id %s", order_id)
 
 
 def _supplier_new_order_hook(order_id: int) -> None:

@@ -15,15 +15,18 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.utils.text import slugify
 
+from apps.dealers.models import Dealer
+
 from . import image_import
 from .models import Category, Color, PendingPhoto, Product, ProductVariant, Size
 
 MAX_BYTES = 1_000_000
 MAX_ROWS = 2000
-COLUMNS = [
+BASE_COLUMNS = [
     "name", "slug", "sku", "category", "description", "price", "old_price", "badge", "stock", "is_active",
     "color", "color_hex", "size", "variant_sku", "variant_price", "variant_stock", "images", "color_images",
 ]
+COLUMNS = [*BASE_COLUMNS, "dealer"]   # `dealer` (the exact name of a dealer under Dealers) is optional and not part of the demo file
 REQUIRED = {"name", "category", "price"}
 TRUE, FALSE = {"1", "true", "yes", "y", "active"}, {"0", "false", "no", "n", "inactive"}
 SLUG_MAX = 255   # Product.slug / Category.slug length
@@ -71,6 +74,7 @@ class ProductSpec:
     price: Decimal = Decimal(0)
     old_price: Decimal | None = None
     badge: str = ""
+    dealer: str = ""   # name of the dealer who ships it (must exist under Dealers); empty = dropship or own stock
     stock: int = 0
     is_active: bool = True
     variants: list[VariantSpec] = field(default_factory=list)
@@ -123,8 +127,8 @@ class Plan:
 def demo_csv() -> str:
     out = io.StringIO()
     writer = csv.writer(out, lineterminator="\n")
-    writer.writerow(COLUMNS)
-    writer.writerows(row + [""] * (len(COLUMNS) - len(row)) for row in DEMO_ROWS)
+    writer.writerow(BASE_COLUMNS)
+    writer.writerows(row + [""] * (len(BASE_COLUMNS) - len(row)) for row in DEMO_ROWS)
     return out.getvalue()
 
 
@@ -198,6 +202,7 @@ def parse(data: bytes, *, mode: str = "upsert", create_missing: bool = True, ban
 
     categories = {c.slug: c for c in Category.objects.all()} | {c.name.lower(): c for c in Category.objects.all()}
     colors = {c.name.lower() for c in Color.objects.all()}
+    dealers = {d.name.lower() for d in Dealer.objects.all()}
     sizes = {s.name.lower() for s in Size.objects.all()}
     existing_products = {p.slug: p for p in Product.objects.all()}
     existing_skus = {p.sku: p.slug for p in Product.objects.all()}
@@ -229,7 +234,7 @@ def parse(data: bytes, *, mode: str = "upsert", create_missing: bool = True, ban
             spec = specs[key] = ProductSpec(key=key, line=line, slug=_fit_slug(key))
             spec.exists = spec.slug in existing_products
         # --- product-level fields (first row wins; later rows may repeat or leave blank) ---
-        fields = {"name": name, "sku": row.get("sku", ""), "category": row.get("category", ""), "description": row.get("description", ""), "badge": row.get("badge", "")}
+        fields = {"name": name, "sku": row.get("sku", ""), "category": row.get("category", ""), "description": row.get("description", ""), "badge": row.get("badge", ""), "dealer": row.get("dealer", "")}
         for fname, value in fields.items():
             if not value:
                 continue
@@ -315,6 +320,8 @@ def parse(data: bytes, *, mode: str = "upsert", create_missing: bool = True, ban
             plan.errors.append((spec.line, f"product “{key}” has no name"))
         if len(spec.name) > NAME_MAX or len(spec.badge) > 30:
             plan.errors.append((spec.line, f"“{spec.name[:30]}”: name is limited to {NAME_MAX} characters and badge to 30"))
+        if spec.dealer and spec.dealer.lower() not in dealers:
+            plan.errors.append((spec.line, f"dealer “{spec.dealer}” doesn't exist — add it under Dealers first"))
         if not spec.category:
             plan.errors.append((spec.line, f"“{spec.name or key}”: category is required"))
         else:
@@ -417,6 +424,8 @@ def apply(plan: Plan) -> dict:
             "price": spec.price, "old_price": spec.old_price, "badge": spec.badge or (product.badge if product else ""),
             "is_active": spec.is_active,
         }
+        if spec.dealer:
+            values["dealer"] = Dealer.objects.filter(name__iexact=spec.dealer).first()
         if not spec.variants:
             values["stock"] = spec.stock
         if product is None:

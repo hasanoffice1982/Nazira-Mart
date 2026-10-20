@@ -15,7 +15,7 @@ User = get_user_model()
 pytestmark = pytest.mark.django_db
 IMPORT = "admin:catalog_product_import"
 CONFIRM = "admin:catalog_product_import_confirm"
-HEAD = ",".join(importer.COLUMNS)
+HEAD = ",".join(importer.BASE_COLUMNS)   # the demo file; `dealer` is an optional extra column
 
 
 @pytest.fixture(autouse=True)
