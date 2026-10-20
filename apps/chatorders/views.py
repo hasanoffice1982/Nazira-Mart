@@ -65,7 +65,7 @@ def create_order(request):
             raise ValueError
     except ValueError:
         return JsonResponse({"error": "bad json"}, status=400)
-    dry_run = bool(data.get("dry_run"))
+    dry_run = services.as_bool(data.get("dry_run", False))
     try:
         result, created = services.place(data, dry_run=dry_run)
     except services.ChatOrderError as exc:

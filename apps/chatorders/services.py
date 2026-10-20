@@ -1,6 +1,7 @@
 """Chat orders: a bot (n8n + OpenAI) looks products up, quotes a total and creates a PENDING order. Staff confirm by phone as usual."""
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 
 from django.db import transaction
@@ -38,7 +39,17 @@ def chat_user_for(phone: str) -> User:
     return user
 
 
+def as_bool(value) -> bool:
+    """AI tools often send booleans as text."""
+    return value if isinstance(value, bool) else str(value).strip().lower() in ("true", "1", "yes")
+
+
 def resolve_lines(items) -> list[tuple[int, int, int]]:
+    if isinstance(items, str):   # a bot may send the list as JSON text
+        try:
+            items = json.loads(items)
+        except ValueError:
+            raise ChatOrderError("items must be a list like [{\"sku\": \"FR1-18\", \"quantity\": 1}]") from None
     if not isinstance(items, list) or not items:
         raise ChatOrderError("items must be a non-empty list of {sku, quantity}")
     if len(items) > MAX_ITEMS:

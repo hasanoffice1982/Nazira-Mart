@@ -140,3 +140,13 @@ def test_admin_shows_where_the_order_came_from_without_extra_queries(client, sho
         post(client, {**BASE, "request_id": f"a{n}", "phone": f"0171234567{n % 10}", "items": [{"sku": "PB1", "quantity": 1}]})
     assert count()[1] <= small + 1
     assert client.get(url + "?via=whatsapp").status_code == 200 and client.get(url + "?via=website").status_code == 200
+
+
+@override_settings(CHAT_ORDER_TOKEN=TOKEN)
+@pytest.mark.django_db
+def test_ai_tools_may_send_items_and_dry_run_as_text(client, shop):
+    r = post(client, {**BASE, "dry_run": "true", "items": '[{"sku": "PB1", "quantity": 1}]'})
+    assert r.status_code == 200 and r.json()["dry_run"] and Order.objects.count() == 0
+    r = post(client, {**BASE, "dry_run": "false", "request_id": "t1", "items": '[{"sku": "PB1", "quantity": "2"}]'})
+    assert r.status_code == 201 and Order.objects.get().items.get().quantity == 2
+    assert post(client, {**BASE, "request_id": "t2", "items": "not json"}).status_code == 400
