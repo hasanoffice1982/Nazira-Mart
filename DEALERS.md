@@ -5,7 +5,7 @@ are sent to an automation (n8n or Make) which tells the dealer and brings courie
 
 ## In the admin
 1. **Dealers → Add dealer.** Name, phone, email. Paste the n8n **Production URL** of the workflow's Webhook node into *Automation webhook URL*. Save: the page then shows the *Tracking address* (give it to n8n) and the signing *secret*.
-2. **Products → a product → Who ships it → Dealer.** Or add a `dealer` column (the dealer's exact name) to the CSV import.
+2. **Products → a product → Who ships it → Dealer.** Or use the CSV column below.
 3. Product and order lists show a **Ships from** badge: *Dropship*, *Dealer: <name>* or *Own stock*, with a "who ships it" filter.
 4. When you **Confirm** an order, its dealer items are POSTed to that dealer's webhook. An order with items from two dealers sends two messages. See **Dealers → Dealer orders** (also inside the order).
    Failed sends show the error; use the order action **Send to dealers**, or `python manage.py dealer_retry`.
@@ -38,3 +38,19 @@ Header `X-NarizMart-Signature: sha256=<hex>` is the HMAC-SHA256 of the raw body 
 **B. Tracking → shop**: Google Sheets Trigger *on row updated* (courier and tracking columns filled) → IF tracking not empty → HTTP Request POST to the tracking address with the JSON above → write "synced" in a sheet column so it is not sent twice.
 
 Each order costs about 2–3 n8n executions. Self-hosted n8n has no execution limit.
+
+## CSV import: `ships_from` (required for new products)
+| ships_from | meaning |
+|---|---|
+| `dropship` | ordered through the supplier API. `supplier_id` (optional column) is the supplier's product id; if empty the `sku` is used. |
+| `own` | your own stock; nothing is sent anywhere |
+| a dealer's exact name | shipped by that dealer (add the dealer under **Dealers** first) |
+
+Existing products may leave it empty (the source stays as it is). A supplier id can belong to one product only.
+When **Import from supplier** runs, products linked from a CSV with the numeric id are matched by the API's `system_id` and their id is corrected to the real `product_id`.
+
+## One-time: link the products you already uploaded as dropship
+```bash
+python manage.py link_dropship --dry-run                 # lists what would be linked (products whose SKU is all digits)
+python manage.py link_dropship --exclude 7191,7192       # do it, leaving some SKUs out
+```

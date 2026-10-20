@@ -16,6 +16,8 @@ from django.db import transaction
 from django.utils.text import slugify
 
 from apps.dealers.models import Dealer
+from apps.supplier.links import link_product, unlink_product
+from apps.supplier.models import SupplierProduct
 
 from . import image_import
 from .models import Category, Color, PendingPhoto, Product, ProductVariant, Size
@@ -26,7 +28,11 @@ BASE_COLUMNS = [
     "name", "slug", "sku", "category", "description", "price", "old_price", "badge", "stock", "is_active",
     "color", "color_hex", "size", "variant_sku", "variant_price", "variant_stock", "images", "color_images",
 ]
-COLUMNS = [*BASE_COLUMNS, "dealer"]   # `dealer` (the exact name of a dealer under Dealers) is optional and not part of the demo file
+# ships_from: who ships the product. Required for NEW products: "dropship" (ordered through the supplier API; supplier_id is the
+# supplier's product id, default = sku), "own" (your own stock) or the exact name of a dealer under Dealers.
+COLUMNS = [*BASE_COLUMNS, "ships_from", "supplier_id"]
+SHIPS_KEYWORDS = {"dropship", "own"}
+DEMO_COLUMNS = [*BASE_COLUMNS, "ships_from"]   # supplier_id only matters for dropship rows
 REQUIRED = {"name", "category", "price"}
 TRUE, FALSE = {"1", "true", "yes", "y", "active"}, {"0", "false", "no", "n", "inactive"}
 SLUG_MAX = 255   # Product.slug / Category.slug length
@@ -74,7 +80,8 @@ class ProductSpec:
     price: Decimal = Decimal(0)
     old_price: Decimal | None = None
     badge: str = ""
-    dealer: str = ""   # name of the dealer who ships it (must exist under Dealers); empty = dropship or own stock
+    ships_from: str = ""    # "dropship", "own" or a dealer's name
+    supplier_id: str = ""   # dropship only: the supplier's product id (defaults to the sku)
     stock: int = 0
     is_active: bool = True
     variants: list[VariantSpec] = field(default_factory=list)
@@ -127,8 +134,8 @@ class Plan:
 def demo_csv() -> str:
     out = io.StringIO()
     writer = csv.writer(out, lineterminator="\n")
-    writer.writerow(BASE_COLUMNS)
-    writer.writerows(row + [""] * (len(BASE_COLUMNS) - len(row)) for row in DEMO_ROWS)
+    writer.writerow(DEMO_COLUMNS)
+    writer.writerows(row + [""] * (len(BASE_COLUMNS) - len(row)) + ["own"] for row in DEMO_ROWS)
     return out.getvalue()
 
 
@@ -203,6 +210,7 @@ def parse(data: bytes, *, mode: str = "upsert", create_missing: bool = True, ban
     categories = {c.slug: c for c in Category.objects.all()} | {c.name.lower(): c for c in Category.objects.all()}
     colors = {c.name.lower() for c in Color.objects.all()}
     dealers = {d.name.lower() for d in Dealer.objects.all()}
+    seen_supplier_ids: set[str] = set()
     sizes = {s.name.lower() for s in Size.objects.all()}
     existing_products = {p.slug: p for p in Product.objects.all()}
     existing_skus = {p.sku: p.slug for p in Product.objects.all()}
@@ -234,7 +242,7 @@ def parse(data: bytes, *, mode: str = "upsert", create_missing: bool = True, ban
             spec = specs[key] = ProductSpec(key=key, line=line, slug=_fit_slug(key))
             spec.exists = spec.slug in existing_products
         # --- product-level fields (first row wins; later rows may repeat or leave blank) ---
-        fields = {"name": name, "sku": row.get("sku", ""), "category": row.get("category", ""), "description": row.get("description", ""), "badge": row.get("badge", ""), "dealer": row.get("dealer", "")}
+        fields = {"name": name, "sku": row.get("sku", ""), "category": row.get("category", ""), "description": row.get("description", ""), "badge": row.get("badge", ""), "ships_from": row.get("ships_from", ""), "supplier_id": row.get("supplier_id", "")}
         for fname, value in fields.items():
             if not value:
                 continue
@@ -320,8 +328,19 @@ def parse(data: bytes, *, mode: str = "upsert", create_missing: bool = True, ban
             plan.errors.append((spec.line, f"product “{key}” has no name"))
         if len(spec.name) > NAME_MAX or len(spec.badge) > 30:
             plan.errors.append((spec.line, f"“{spec.name[:30]}”: name is limited to {NAME_MAX} characters and badge to 30"))
-        if spec.dealer and spec.dealer.lower() not in dealers:
-            plan.errors.append((spec.line, f"dealer “{spec.dealer}” doesn't exist — add it under Dealers first"))
+        sf = spec.ships_from.strip()
+        if not sf and not spec.exists:
+            plan.errors.append((spec.line, f"“{spec.name or key}”: ships_from is required for a new product — use dropship, own, or a dealer's name"))
+        elif sf.lower() == "dropship":
+            sid = (spec.supplier_id or spec.sku).strip()
+            owner = SupplierProduct.objects.filter(supplier_product_id=sid).exclude(product__slug=spec.slug).first()
+            if not sid:
+                plan.errors.append((spec.line, f"“{spec.name or key}”: dropship needs a supplier_id (or a sku to use as the supplier id)"))
+            elif owner or sid in seen_supplier_ids:
+                plan.errors.append((spec.line, f"supplier id “{sid}” is already used by another product"))
+            seen_supplier_ids.add(sid)
+        elif sf and sf.lower() not in SHIPS_KEYWORDS and sf.lower() not in dealers:
+            plan.errors.append((spec.line, f"ships_from “{sf}” is not dropship, own or an existing dealer — add the dealer under Dealers first"))
         if not spec.category:
             plan.errors.append((spec.line, f"“{spec.name or key}”: category is required"))
         else:
@@ -424,8 +443,11 @@ def apply(plan: Plan) -> dict:
             "price": spec.price, "old_price": spec.old_price, "badge": spec.badge or (product.badge if product else ""),
             "is_active": spec.is_active,
         }
-        if spec.dealer:
-            values["dealer"] = Dealer.objects.filter(name__iexact=spec.dealer).first()
+        sf = spec.ships_from.strip().lower()
+        if sf == "dropship" or sf == "own":
+            values["dealer"] = None
+        elif sf:
+            values["dealer"] = Dealer.objects.filter(name__iexact=sf).first()
         if not spec.variants:
             values["stock"] = spec.stock
         if product is None:
@@ -442,6 +464,10 @@ def apply(plan: Plan) -> dict:
                 product.sku = spec.sku
             product.save()
             updated += 1
+        if sf == "dropship":
+            link_product(product, (spec.supplier_id or product.sku).strip(), price=spec.price)
+        elif sf:   # "own" or a dealer: not a supplier product
+            unlink_product(product)
         for v in spec.variants:
             color = size = None
             if v.color:

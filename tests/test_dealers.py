@@ -120,16 +120,29 @@ def test_tracking_webhook_updates_order_and_rejects_wrong_token(setup, posts, cl
 
 
 @pytest.mark.django_db
-def test_csv_dealer_column(settings):
+def test_csv_ships_from_column(settings):
     Category.objects.create(name="Kids", slug="kids", title="Kids")
-    csv_text = "name,slug,sku,category,price,stock,dealer\nFrock,frock,D1,Kids,999,5,Rahim Traders\n"
-    plan = importer.parse(csv_text.encode())
-    assert plan.errors and "doesn't exist" in plan.errors[0][1]
+    head = "name,slug,sku,category,price,stock,ships_from,supplier_id\n"
+    # required for a new product
+    assert importer.parse((head + "Frock,frock,D1,Kids,999,5,,\n").encode()).errors
+    # an unknown dealer is refused
+    plan = importer.parse((head + "Frock,frock,D1,Kids,999,5,Rahim Traders,\n").encode())
+    assert plan.errors and "Dealers" in plan.errors[0][1]
     Dealer.objects.create(name="Rahim Traders")
-    plan = importer.parse(csv_text.encode())
+    plan = importer.parse((head + "Frock,frock,D1,Kids,999,5,Rahim Traders,\n" + "Hoodie,hoodie,325,Kids,849,5,dropship,\n" + "Bag,bag,B1,Kids,500,5,own,\n").encode())
     assert not plan.errors
     importer.apply(plan)
-    assert Product.objects.get(slug="frock").dealer.name == "Rahim Traders"
+    assert Product.objects.get(slug="frock").fulfilment == ("dealer", "Dealer: Rahim Traders")
+    assert Product.objects.get(slug="hoodie").supplier_link.supplier_product_id == "325"   # supplier id defaults to the sku
+    assert Product.objects.get(slug="bag").fulfilment == ("own", "Own stock")
+    # changing a row to another source updates it; the same supplier id on two products is refused
+    assert importer.parse((head + "Hoodie,hoodie,325,Kids,849,5,own,\n" + "Bag,bag,B1,Kids,500,5,dropship,325\n").encode()).errors   # one id cannot move between products inside one file
+    importer.apply(importer.parse((head + "Hoodie,hoodie,325,Kids,849,5,own,\n").encode()))
+    assert Product.objects.get(slug="hoodie").fulfilment[0] == "own"
+    importer.apply(importer.parse((head + "Bag,bag,B1,Kids,500,5,dropship,325\n").encode()))
+    assert Product.objects.get(slug="bag").supplier_link.supplier_product_id == "325"
+    clash = importer.parse((head + "Hoodie,hoodie,325,Kids,849,5,dropship,\n").encode())
+    assert clash.errors and "already used" in clash.errors[0][1]
 
 
 @pytest.mark.django_db
@@ -154,3 +167,20 @@ def test_admin_lists_show_who_ships_and_filter(setup, client, django_user_model)
     assert client.get(base + "dealers/dealer/").status_code == 200
     assert client.get(base + f"dealers/dealer/{dealer.pk}/change/").status_code == 200
     assert client.get(base + f"orders/order/{order.pk}/change/").status_code == 200
+
+
+@pytest.mark.django_db
+def test_link_dropship_command_and_supplier_import_corrects_the_id(settings):
+    from apps.supplier import importer as supplier_importer
+
+    cat = Category.objects.create(name="Kids", slug="kids", title="Kids")
+    a = Product.objects.create(category=cat, name="Frock", slug="frock", sku="8971", price=1299, stock=0)
+    Product.objects.create(category=cat, name="Own thing", slug="own", sku="NM-1", price=500, stock=3)
+    call_command("link_dropship", "--exclude", "999")
+    a.refresh_from_db()
+    assert a.supplier_link.supplier_product_id == "8971" and a.fulfilment[0] == "dropship"
+    assert Product.objects.get(slug="own").fulfilment[0] == "own"   # non-numeric sku is left alone
+    item = {"product_id": "VND-8971", "system_id": 8971, "title": "Kids Frock", "final_selling_price": 1299, "base_price": 666, "stock": 4, "is_active": 1}
+    supplier_importer.sync(items=[item], photos=False)
+    a.refresh_from_db()
+    assert Product.objects.count() == 2 and a.supplier_link.supplier_product_id == "VND-8971" and a.stock == 4
