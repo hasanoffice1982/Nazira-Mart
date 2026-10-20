@@ -54,3 +54,19 @@ When **Import from supplier** runs, products linked from a CSV with the numeric 
 python manage.py link_dropship --dry-run                 # lists what would be linked (products whose SKU is all digits)
 python manage.py link_dropship --exclude 7191,7192       # do it, leaving some SKUs out
 ```
+
+## The two n8n workflows (already created in your n8n Cloud, as drafts)
+| Workflow | n8n link | What it does |
+|---|---|---|
+| NarizMart: new dealer order to sheet + dealer email | https://instance-447316956.n8nclouds.host/workflow/yshQzQhK74xHZzYi | Webhook `narizmart-dealer-order` receives the order, adds a row to the dealer sheet (or marks it CANCELLED), emails the dealer if the dealer has an email |
+| NarizMart: dealer sheet tracking to shop | https://instance-447316956.n8nclouds.host/workflow/ynhHVsUsFlxinIgw | Every ~2 minutes looks for rows where the dealer set Status or tracking, posts them to the shop's tracking address, then marks that status as sent |
+
+Set up once per dealer (duplicate both workflows for another dealer and use a new webhook path, e.g. `narizmart-dealer-order-2`):
+1. Create a Google Sheet, rename the first tab **Orders**, and paste this header row into row 1:
+   `Reference, Order Number, Placed At, Customer, Phone, Address, Area, Items, COD Amount, Delivery Charge, Callback URL, Status, Courier, Tracking Code, Tracking Link, Synced Status, Updated`
+   Share it with the dealer (they edit only Status, Courier, Tracking Code, Tracking Link).
+2. In workflow 1 pick that sheet in the two Google Sheets nodes; in workflow 2 pick it in the trigger and in "Mark status as sent". Publish both.
+3. Admin > Dealers > the dealer: Automation webhook URL = `https://instance-447316956.n8nclouds.host/webhook/narizmart-dealer-order`.
+4. Place a test order for a dealer product, confirm it, and check the row appears; set Status to `shipped` in the sheet and watch the order change.
+
+Dealer statuses the shop understands: processing, shipped, delivered, returned, cancelled. `NEW` and `CANCELLED - do not ship` are written by the shop and are never sent back.
