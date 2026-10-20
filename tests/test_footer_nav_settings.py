@@ -164,3 +164,17 @@ def test_layout_fields_are_in_the_admin(client, django_user_model):
     for name in ("layout_mode", "layout_side_padding", "layout_hero_height"):
         assert f'name="{name}"' in html
     assert "Layout &amp; size" in html
+
+
+@pytest.mark.django_db
+def test_box_width_setting_reaches_the_page(client):
+    from django.core.cache import cache
+
+    from apps.core.models import SiteSettings
+
+    site = SiteSettings.load()
+    site.layout_mode, site.layout_box_width = "boxed", 1600
+    site.save()
+    cache.clear()
+    html = client.get("/").content.decode()
+    assert "layout-boxed" in html and "--box-width:1600px" in html
