@@ -26,8 +26,8 @@ def send_status_email(order_id: int, status: str, *, by_customer: bool = False) 
     """Send the email for `status`. Loads the order fresh so fields saved in the same request (e.g. a tracking number) are included."""
     subject = SUBJECTS.get(status)
     order = Order.objects.select_related("user").prefetch_related("items").filter(pk=order_id).first()
-    if subject is None or order is None or not order.user.email:
-        return False
+    if subject is None or order is None or not order.user.email or order.user.email.endswith("@chat.narizmart.invalid"):
+        return False   # chat customers have no real email
     ctx = {
         "order": order, "status": str(status), "by_customer": by_customer, "brand": settings.SITE_NAME,
         "currency": SiteSettings.load_fresh().currency_symbol, "order_url": f"{settings.SITE_URL.rstrip('/')}{order.get_absolute_url()}",
