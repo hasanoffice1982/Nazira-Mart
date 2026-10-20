@@ -25,3 +25,18 @@ Use a **variant sku** in orders when `needs_variant` is true.
 `GET /api/chat/orders/status/?phone=01712345678&number=NM-1A2B3C4D` -> status, tracking, items (only when phone and number match).
 
 Chat customers get a light account keyed by phone (`<phone>@chat.narizmart.invalid`, no password, no emails sent to it).
+
+## The n8n workflows (created in your n8n Cloud as drafts)
+| Workflow | Link | Purpose |
+|---|---|---|
+| NarizMart: Messenger + WhatsApp order assistant | https://instance-447316956.n8nclouds.host/workflow/7sDYqNQaMBWy0q0P | OpenAI agent with 4 tools (search_products, quote_order, create_order, order_status) |
+| NarizMart: dealer updates by Telegram (AI) | https://instance-447316956.n8nclouds.host/workflow/bNYNyi7kRO9GxVnv | Dealers post "NM-1A2B3C4D shipped, Pathao, tracking PT123" in a Telegram group; OpenAI updates the dealer sheet |
+
+### Setup of the order assistant
+1. Server `.env`: `CHAT_ORDER_TOKEN=<secret>` then restart. In n8n create a **Bearer Auth** credential named `NarizMart chat-order token` with the same secret (used by the four tool nodes).
+2. **Messenger**: a Meta app with the Messenger product, a Facebook Page, and in n8n a *Facebook App* credential (app id + secret) for the trigger (also set the App ID in the trigger node) and a *Facebook Graph API* credential holding the Page access token for the reply node. Subscribe the page to `messages`.
+3. **WhatsApp**: a Meta app with WhatsApp Business Cloud, a phone number, and in n8n the *WhatsApp Business Cloud* credential (access token + business account id) and the *WhatsApp Trigger* credential (app client id + secret). The reply node sends within the 24-hour customer-service window.
+4. Publish. Test with your own phone: ask for a product, order it, say yes; the order appears in Admin > Orders with Via = Messenger/WhatsApp, status Pending. Phone the customer, then Confirm.
+
+### Setup of the Telegram dealer bot
+Create a **new** bot with @BotFather (do not reuse the LinkedIn bot: one bot can feed only one Telegram trigger) and make an n8n Telegram credential `NarizMart Dealer Bot`. Create one group per dealer, add the bot and the dealer, put the group's chat id in the trigger's *Chat IDs*, pick the dealer sheet in the two Sheets nodes, publish.
