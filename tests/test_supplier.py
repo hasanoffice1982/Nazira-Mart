@@ -341,3 +341,9 @@ def test_sync_links_by_numeric_system_id_but_orders_use_product_id():
     importer.sync(items=[{"product_id": "VND-8971", "system_id": 8971, "title": "Kids Frock", "final_selling_price": 1299, "base_price": 666, "stock": 3, "is_active": 1}], photos=False)
     mine.refresh_from_db()
     assert Product.objects.count() == 1 and mine.supplier_link.supplier_product_id == "VND-8971"
+
+
+def test_bangla_colours_become_english():
+    from apps.supplier.variants import parse_colors, parse_variant_field
+    assert parse_colors("Color: লাল, নীল, Green") == ["Red", "Blue", "Green"]
+    assert parse_variant_field("রঙ: কালো, সাদা | Size: M") == (["M"], ["Black", "White"])
