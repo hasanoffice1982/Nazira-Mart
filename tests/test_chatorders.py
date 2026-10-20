@@ -162,3 +162,11 @@ def test_ai_tools_may_send_items_and_dry_run_as_text(client, shop):
     r = post(client, {**BASE, "dry_run": "false", "request_id": "t1", "items": '[{"sku": "PB1", "quantity": "2"}]'})
     assert r.status_code == 201 and Order.objects.get().items.get().quantity == 2
     assert post(client, {**BASE, "request_id": "t2", "items": "not json"}).status_code == 400
+
+
+@pytest.mark.django_db
+def test_hide_products_lists_by_default_and_hides_with_apply(shop):
+    call_command("hide_products", "PB1,NOPE")
+    assert Product.objects.get(sku="PB1").is_active
+    call_command("hide_products", "PB1,NOPE", "--apply")
+    assert not Product.objects.get(sku="PB1").is_active and Product.objects.get(sku="FR1").is_active
