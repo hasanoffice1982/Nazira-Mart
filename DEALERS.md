@@ -17,7 +17,7 @@ are sent to an automation (n8n or Make) which tells the dealer and brings courie
   "reference": "NM-1234-2",              // send this back with the tracking
   "order_number": "NM-1234",
   "placed_at": "2026-10-21T10:15:00+06:00",
-  "dealer": {"id": 2, "name": "Rahim Traders"},
+  "dealer": {"id": 2, "name": "Rahim Traders", "phone": "017...", "email": "rahim@example.com"},
   "customer": {"name": "...", "phone": "017...", "address": "...", "city": "Dhaka", "delivery_area": "dhaka"},
   "cod_amount": "1899.00",               // cash to collect for the WHOLE order
   "delivery_charge": "60.00",

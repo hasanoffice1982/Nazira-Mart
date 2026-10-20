@@ -40,7 +40,7 @@ def build_payload(order: Order, dealer: Dealer, items: list, reference: str, eve
         "reference": reference,   # send this back with the tracking
         "order_number": order.number,
         "placed_at": order.created_at.isoformat(),
-        "dealer": {"id": dealer.pk, "name": dealer.name},
+        "dealer": {"id": dealer.pk, "name": dealer.name, "phone": dealer.phone, "email": dealer.email},
         "customer": {"name": order.full_name, "phone": order.phone, "address": order.address, "city": order.city, "delivery_area": order.delivery_area},
         "cod_amount": str(order.total),   # cash the courier must collect for the WHOLE order
         "delivery_charge": str(order.delivery_charge),
