@@ -32,6 +32,8 @@ def parse_sizes(description: str) -> list[str]:
     return []
 
 
+BN_COLORS = {"লাল": "Red", "নীল": "Blue", "সবুজ": "Green", "কালো": "Black", "সাদা": "White", "হলুদ": "Yellow", "কমলা": "Orange", "বেগুনি": "Purple",
+             "গোলাপি": "Pink", "বাদামি": "Brown", "ধূসর": "Grey", "মেরুন": "Maroon", "অফ হোয়াইট": "Off White"}   # shop colours are always English
 KNOWN_COLORS = {
     "red", "blue", "green", "black", "white", "pink", "yellow", "orange", "purple", "violet", "brown", "grey", "gray", "navy",
     "maroon", "cream", "beige", "gold", "golden", "silver", "sky blue", "off white", "off-white", "teal", "mint", "peach", "lavender",
@@ -39,10 +41,14 @@ KNOWN_COLORS = {
 }
 
 
+def _english_color(name: str) -> str:
+    return BN_COLORS.get(name.strip(), name.strip().title())
+
+
 def parse_colors(description: str) -> list[str]:
     """Only well-known colour names count: Bangla descriptions contain many 'রঙ' sentences that are not option lists."""
     for found in COLOR_RE.finditer(description or ""):
-        tokens = [t.title() for t in _split(found.group(1)) if t.lower() in KNOWN_COLORS]
+        tokens = [_english_color(t) for t in _split(found.group(1)) if t.lower() in KNOWN_COLORS]
         if tokens:
             return list(dict.fromkeys(tokens))[:MAX_OPTIONS]
     return []
@@ -56,7 +62,7 @@ def parse_variant_field(text: str) -> tuple[list[str], list[str]]:
         key, _, values = part.partition(":")
         key, options = key.strip().lower(), _split(values)
         if key in ("color", "colour", "রঙ", "কালার"):
-            colors += [o.title() for o in options if 2 <= len(o) <= 20]
+            colors += [_english_color(o) for o in options if 2 <= len(o) <= 20]
         elif key in ("size", "সাইজ"):
             sizes += [o.upper() if not o.isdigit() else o for o in options if len(o) <= 20]
     return list(dict.fromkeys(sizes))[:MAX_OPTIONS], list(dict.fromkeys(colors))[:MAX_OPTIONS]
