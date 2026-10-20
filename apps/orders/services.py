@@ -59,7 +59,7 @@ def _discount_for(user, subtotal: Decimal, coupon_code: str):
 
 
 @transaction.atomic
-def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon_code: str = "") -> Order:
+def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon_code: str = "", auto_confirm: bool = True) -> Order:
     """Create an order from (product_id, variant_id, quantity) triples; prices and stock come from the DB."""
     lines = normalise_lines(lines)
     if not lines:
@@ -113,7 +113,8 @@ def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon
         target.stock -= qty
         target.save(update_fields=["stock"])
     record_status(order, S.PENDING, note="Order placed — cash on delivery", by=user)
-    transaction.on_commit(lambda: _supplier_new_order_hook(order.pk))
+    if auto_confirm:   # chat orders are never auto-confirmed: staff phone the customer first
+        transaction.on_commit(lambda: _supplier_new_order_hook(order.pk))
     return order
 
 
