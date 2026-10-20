@@ -389,3 +389,12 @@ def test_import_photos_command_attaches_from_zip_and_skips_done(tmp_path):
     assert product.images.count() == 1
     call_command("import_photos", csv=str(csv_path), zip=[str(zpath)])   # second run skips products that already have photos
     assert product.images.count() == 1
+
+
+@pytest.mark.django_db
+def test_variant_skus_stay_unique_for_bangla_colour_names():
+    from apps.catalog.models import Category, Color, Product, ProductVariant
+    cat = Category.objects.create(name="Toys", slug="toys-x", title="Toys")
+    product = Product.objects.create(category=cat, name="Game", slug="game-x", sku="8588", price=900, stock=5)
+    skus = {ProductVariant.objects.create(product=product, color=Color.objects.create(name=name)).sku for name in ("লাল", "নীল", "!!!", "???")}
+    assert len(skus) == 4
