@@ -3,6 +3,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django_ratelimit.decorators import ratelimit
 
+from apps.catalog.services import card_prefetch
 from apps.catalog.models import Product, ProductVariant
 from apps.core.htmx import hx_trigger
 from apps.core.models import SiteSettings
@@ -44,7 +45,7 @@ class AddToCartView(CartMutationView):
     toast = "Added to your bag ✓"
 
     def post(self, request, product_id: int):
-        product = get_object_or_404(Product.objects.prefetch_related("variants__color", "variants__size", "images"), pk=product_id, is_active=True)
+        product = get_object_or_404(Product.objects.prefetch_related(*card_prefetch()), pk=product_id, is_active=True)
         variant, error = resolve_variant(product, request.POST)
         if error:
             return self.respond(request, error)

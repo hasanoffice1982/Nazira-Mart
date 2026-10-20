@@ -64,6 +64,9 @@ def _after_delete(sender, instance, **kwargs):
 
 
 def connect() -> None:
+    from . import cached
+
+    cached.connect()
     for label in IMAGE_FIELDS:
         model = apps.get_model(label)
         pre_save.connect(_remember_old, sender=model, dispatch_uid=f"img-pre-{label}")

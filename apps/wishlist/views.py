@@ -1,11 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
 
-from apps.catalog.models import Product
+from apps.catalog.models import Product, ProductVariant
 from apps.core.htmx import hx_trigger
 
 from .models import WishlistItem
@@ -16,7 +17,7 @@ class WishlistView(LoginRequiredMixin, ListView):
     context_object_name = "items"
 
     def get_queryset(self):
-        return WishlistItem.objects.filter(user=self.request.user, product__is_active=True).select_related("product__category").prefetch_related("product__variants__color", "product__images")
+        return WishlistItem.objects.filter(user=self.request.user, product__is_active=True).select_related("product__category").prefetch_related(Prefetch("product__variants", queryset=ProductVariant.objects.select_related("color", "size")), "product__images")
 
 
 class ToggleWishlistView(View):

@@ -7,6 +7,7 @@ from decimal import Decimal
 from django.db import transaction
 
 from apps.catalog.models import Product, ProductVariant
+from apps.catalog.services import card_prefetch
 from apps.core.models import SiteSettings
 
 from .models import Cart, CartItem
@@ -74,6 +75,7 @@ class CartService:
         return {_parse_session_key(k): v for k, v in self.request.session.get(SESSION_KEY, {}).items()}
 
     def _save_raw(self, data: dict[Key, int]) -> None:
+        self.request._cart_lines = None   # the cart changed: the per-request copy below is stale
         if self.user:
             cart, _ = Cart.objects.get_or_create(user=self.user)
             for item in cart.items.all():
@@ -87,9 +89,20 @@ class CartService:
 
     # --- queries -------------------------------------------------------
     def lines(self) -> list[Line]:
+        """The cart's lines. Loaded once per request (the header, drawer, checkout and totals all ask for it) in three queries."""
+        cached = getattr(self.request, "_cart_lines", None)
+        if cached is not None and cached[0] == (self.user.pk if self.user else 0):
+            return cached[1]
+        out = self._load_lines()
+        self.request._cart_lines = ((self.user.pk if self.user else 0), out)
+        return out
+
+    def _load_lines(self) -> list[Line]:
         raw = self._raw()
-        products = {p.pk: p for p in Product.objects.filter(pk__in={pid for pid, _ in raw}, is_active=True).prefetch_related("variants", "images")}
-        variants = {v.pk: v for v in ProductVariant.objects.filter(pk__in={vid for _, vid in raw if vid}, is_active=True).select_related("color", "size", "product")}
+        if not raw:
+            return []
+        products = {p.pk: p for p in Product.objects.filter(pk__in={pid for pid, _ in raw}, is_active=True).select_related("category").prefetch_related(*card_prefetch())}
+        variants = {v.pk: v for p in products.values() for v in p.variants.all() if v.is_active}   # already loaded with the products
         out = []
         for (pid, vid), qty in raw.items():
             product = products.get(pid)

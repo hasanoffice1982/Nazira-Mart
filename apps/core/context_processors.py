@@ -1,8 +1,9 @@
 from apps.cart.services import get_cart
 from apps.catalog.services import active_categories
-from apps.orders.promotions import COUPON_SESSION_KEY, evaluate
+from apps.orders.promotions import COUPON_SESSION_KEY, evaluate_for_request
 from apps.wishlist.models import WishlistItem
 
+from .cached import cached
 from .models import Page, SiteSettings
 
 
@@ -15,11 +16,11 @@ def storefront(request) -> dict:
     if request.user.is_authenticated:
         wishlist_ids = set(WishlistItem.objects.filter(user=request.user).values_list("product_id", flat=True))
     subtotal = sum(l.total for l in lines)
-    deal = evaluate(subtotal, request.user, request.session.get(COUPON_SESSION_KEY, "")) if lines else None
+    deal = evaluate_for_request(request, subtotal, request.session.get(COUPON_SESSION_KEY, "")) if lines else None
     return {
         "cart_deal": deal,
         "site": site,
-        "footer_pages": list(Page.objects.filter(is_published=True).exclude(group=Page.Group.NONE).only("slug", "title", "group")),
+        "footer_pages": cached("footer_pages", lambda: list(Page.objects.filter(is_published=True).exclude(group=Page.Group.NONE).only("slug", "title", "group"))),
         "cart_lines": lines,
         "cart_count": sum(l.quantity for l in lines),
         "cart_subtotal": subtotal,
