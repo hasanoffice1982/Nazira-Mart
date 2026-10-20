@@ -60,6 +60,7 @@ class Order(models.Model):
     coupon_code = models.CharField(max_length=30, blank=True)
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2)
+    delivery_prepaid = models.BooleanField("delivery charge paid in advance", default=False, help_text="Tick when the customer already paid the delivery charge (e.g. bKash). The courier then collects only the rest.")
 
     tracking_number = models.CharField(max_length=60, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -73,6 +74,11 @@ class Order(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("orders:detail", args=[self.number])
+
+    @property
+    def cod_amount(self):
+        """Cash the courier collects: everything, minus a delivery charge the customer already paid."""
+        return self.total - self.delivery_charge if self.delivery_prepaid else self.total
 
     @staticmethod
     def new_number() -> str:

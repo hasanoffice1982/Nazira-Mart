@@ -19,7 +19,7 @@ are sent to an automation (n8n or Make) which tells the dealer and brings courie
   "placed_at": "2026-10-21T10:15:00+06:00",
   "dealer": {"id": 2, "name": "Rahim Traders", "phone": "017...", "email": "rahim@example.com"},
   "customer": {"name": "...", "phone": "017...", "address": "...", "city": "Dhaka", "delivery_area": "dhaka"},
-  "cod_amount": "1899.00",               // cash to collect for the WHOLE order
+  "cod_amount": "1899.00",               // cash to collect: the whole order, minus the delivery charge if the customer paid it in advance (see delivery_prepaid)
   "delivery_charge": "60.00",
   "items": [{"sku": "NM-2001", "name": "...", "variant": "Pink / M", "quantity": 1, "unit_price": "849.00"}],
   "callback_url": "https://narizmart.com/dealer/webhook/<token>/"

@@ -30,7 +30,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ("number", "user", "status_badge", "payment_status", "total", "created_at")
     list_select_related = ("user",)
     # no date_hierarchy: it needs MySQL time-zone tables, which shared hosting does not have (admin list returned a 500)
-    list_filter = ("status", "payment_status", "delivery_area", ("created_at", admin.DateFieldListFilter))
+    list_filter = ("status", "payment_status", "delivery_prepaid", "delivery_area", ("created_at", admin.DateFieldListFilter))
     search_fields = ("number", "user__email", "phone", "full_name")
     readonly_fields = ("number", "user", "subtotal", "discount", "promotion", "promotion_label", "coupon_code", "delivery_charge", "total", "payment_method", "created_at", "updated_at", "billing_name", "billing_phone", "billing_address", "billing_city")
     inlines = [OrderItemInline, HistoryInline]

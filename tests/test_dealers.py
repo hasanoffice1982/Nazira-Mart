@@ -57,7 +57,7 @@ def test_confirming_sends_the_dealers_items_with_cod_and_reference(setup, posts,
     name, payload = posts[0]
     assert name == "Rahim Traders" and payload["event"] == "order.confirmed"
     assert payload["dealer"] == {"id": dealer.pk, "name": "Rahim Traders", "phone": "", "email": ""}
-    assert payload["reference"] == f"{order.number}-{dealer.pk}" and payload["cod_amount"] == str(order.total)
+    assert payload["reference"] == f"{order.number}-{dealer.pk}" and payload["cod_amount"] == str(order.total) and payload["delivery_prepaid"] is False
     assert payload["items"][0]["sku"] == product.sku and payload["customer"]["phone"] == "01712345678"
     assert payload["callback_url"].endswith(f"/dealer/webhook/{dealer.token}/")
     assert DealerOrder.objects.get(order=order).state == "sent"
@@ -185,3 +185,11 @@ def test_link_dropship_command_and_supplier_import_corrects_the_id(settings):
     supplier_importer.sync(items=[item], photos=False)
     a.refresh_from_db()
     assert Product.objects.count() == 2 and a.supplier_link.supplier_product_id == "VND-8971" and a.stock == 4
+
+
+@pytest.mark.django_db
+def test_prepaid_delivery_charge_is_not_collected_by_the_courier(setup):
+    dealer, _, order = setup
+    order.delivery_prepaid = True
+    payload = services.build_payload(order, dealer, list(order.items.all()), "ref")
+    assert payload["delivery_prepaid"] is True and payload["cod_amount"] == str(order.total - order.delivery_charge)

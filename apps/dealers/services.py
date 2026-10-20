@@ -42,8 +42,9 @@ def build_payload(order: Order, dealer: Dealer, items: list, reference: str, eve
         "placed_at": order.created_at.isoformat(),
         "dealer": {"id": dealer.pk, "name": dealer.name, "phone": dealer.phone, "email": dealer.email},
         "customer": {"name": order.full_name, "phone": order.phone, "address": order.address, "city": order.city, "delivery_area": order.delivery_area},
-        "cod_amount": str(order.total),   # cash the courier must collect for the WHOLE order
+        "cod_amount": str(order.cod_amount),   # cash the courier must collect (the whole order, less a delivery charge paid in advance)
         "delivery_charge": str(order.delivery_charge),
+        "delivery_prepaid": order.delivery_prepaid,
         "items": [
             {"sku": i.sku, "name": i.name, "variant": i.variant_label, "quantity": i.quantity, "unit_price": str(i.unit_price)}
             for i in items
