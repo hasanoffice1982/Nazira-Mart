@@ -14,6 +14,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from .models import Product
+from .services import card_prefetch
 
 CACHE_KEY = "popular_ids"   # cleared by Product.save and SiteSettings.save; orders are picked up within the TTL
 CACHE_SECONDS = 300
@@ -55,7 +56,7 @@ def popular_products(site) -> list[Product]:
         cache.set(CACHE_KEY, ids, CACHE_SECONDS)
     products = {
         p.id: p
-        for p in Product.objects.filter(id__in=ids, is_active=True).select_related("category").prefetch_related("variants__color", "variants__size", "images")
+        for p in Product.objects.filter(id__in=ids, is_active=True).select_related("category").prefetch_related(*card_prefetch())
     }
     return [products[i] for i in ids if i in products]
 

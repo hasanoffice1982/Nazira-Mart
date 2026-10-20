@@ -1,6 +1,8 @@
-from django.db.models import F, Q, QuerySet
+from django.db.models import F, Prefetch, Q, QuerySet
 
-from .models import Category, Product
+from apps.core.cached import cached
+
+from .models import Category, Product, ProductVariant
 
 SORTS = {
     "new": "-created_at",
@@ -17,8 +19,13 @@ COLLECTIONS = {
 }
 
 
+def card_prefetch() -> list:
+    """What a product card or page needs, in two queries: all variants WITH their colour and size (one JOIN), and the photos."""
+    return [Prefetch("variants", queryset=ProductVariant.objects.select_related("color", "size")), "images"]
+
+
 def search_products(*, category: str = "", query: str = "", sort: str = "", collection: str = "") -> QuerySet[Product]:
-    qs = Product.objects.filter(is_active=True).select_related("category").prefetch_related("variants__color", "variants__size", "images")
+    qs = Product.objects.filter(is_active=True).select_related("category").prefetch_related(*card_prefetch())
     if category:
         qs = qs.filter(category__slug=category)
     if query:
@@ -32,5 +39,5 @@ def search_products(*, category: str = "", query: str = "", sort: str = "", coll
     return qs.order_by(SORTS.get(sort, "id"))
 
 
-def active_categories() -> QuerySet[Category]:
-    return Category.objects.filter(is_active=True)
+def active_categories() -> list[Category]:
+    return cached("active_categories", lambda: list(Category.objects.filter(is_active=True)))

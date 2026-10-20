@@ -146,7 +146,7 @@ class ProductAdmin(RichTextAdminMixin, admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("dealer", "supplier_link").prefetch_related("variants", "images")
+        return super().get_queryset(request).select_related("category", "dealer", "supplier_link").prefetch_related("variants", "images")
 
     @admin.display(description="Ships from")
     def ships_from(self, obj):

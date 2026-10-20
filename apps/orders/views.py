@@ -6,7 +6,7 @@ from django_ratelimit.decorators import ratelimit
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView
 
-from apps.cart.services import delivery_charge, get_cart
+from apps.cart.services import get_cart
 
 from . import otp as otp_service
 from .checkout import address_data, begin_confirmation, billing_for, save_new_shipping, complete_confirmation, needs_email_confirmation, pending_otp, send_order_confirmation
@@ -15,7 +15,7 @@ from apps.core.models import SiteSettings
 from apps.core.tracking import lines_event, order_event
 
 from .models import Order
-from .promotions import COUPON_SESSION_KEY, evaluate, normalise_code
+from .promotions import COUPON_SESSION_KEY, evaluate, evaluate_for_request, normalise_code
 from .services import OrderError, cancel_by_customer, create_order, lines_from_cart
 
 
@@ -48,12 +48,13 @@ class CheckoutView(FormView):
         ctx = super().get_context_data(**kwargs)
         cart = get_cart(self.request)
         subtotal = cart.subtotal
-        deal = evaluate(subtotal, self.request.user, self.request.session.get(COUPON_SESSION_KEY, ""))
+        deal = evaluate_for_request(self.request, subtotal, self.request.session.get(COUPON_SESSION_KEY, ""))
+        site = SiteSettings.load_fresh()   # delivery prices are read fresh (once), so a change applies to the very next customer
         ctx.update(
-            track_data=lines_event("begin_checkout", cart.lines(), SiteSettings.load().currency_code),
+            track_data=lines_event("begin_checkout", cart.lines(), site.currency_code),
             deal=deal, discount=deal.amount, payable=subtotal - deal.amount, coupon=self.request.session.get(COUPON_SESSION_KEY, ""),
             lines=cart.lines(), subtotal=subtotal, guest=needs_email_confirmation(self.request.user),
-            charge_dhaka=delivery_charge(subtotal, "dhaka"), charge_outside=delivery_charge(subtotal, "outside"),
+            charge_dhaka=site.delivery_for(subtotal, "dhaka"), charge_outside=site.delivery_for(subtotal, "outside"),
         )
         return ctx
 

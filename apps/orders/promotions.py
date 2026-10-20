@@ -29,7 +29,7 @@ class Evaluation:
 
 
 def _money(amount: Decimal) -> str:
-    return SiteSettings.load_fresh()._money(amount)
+    return SiteSettings.load()._money(amount)   # display text only: the cached copy is fine
 
 
 def _used(promotion: Promotion, user=None) -> int:
@@ -57,6 +57,16 @@ def _eligibility_error(promotion: Promotion, subtotal: Decimal, user) -> str:
 
 def normalise_code(raw: str) -> str:
     return " ".join((raw or "").split()).upper()[:30]
+
+
+def evaluate_for_request(request, subtotal: Decimal, code: str = "") -> Evaluation:
+    """Same as evaluate() for page rendering: the header, the cart drawer and the page itself ask for the same discount, so work it out once per request.
+    (Placing an order never uses this: it re-checks everything inside its own transaction.)"""
+    memo = request.__dict__.setdefault("_deal_memo", {})
+    key = (str(subtotal), request.user.pk if request.user.is_authenticated else 0, code)
+    if key not in memo:
+        memo[key] = evaluate(subtotal, request.user, code)
+    return memo[key]
 
 
 def evaluate(subtotal: Decimal, user=None, code: str = "") -> Evaluation:
