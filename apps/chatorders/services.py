@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from datetime import timedelta
 
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import timezone
 
@@ -98,6 +100,12 @@ def place(data: dict, *, dry_run: bool = False) -> tuple[dict, bool]:
         phone = clean_bd_phone(str(data.get("phone", "")))
     except Exception:  # noqa: BLE001  (validator raises a ValidationError with its own wording)
         raise ChatOrderError("That phone number doesn't look right. Ask for a Bangladeshi mobile number like 01712345678") from None
+    email = str(data.get("email", "")).strip().lower()
+    if email:
+        try:
+            validate_email(email)
+        except ValidationError:
+            raise ChatOrderError("That email doesn't look right. Ask again, or skip it: the email is optional") from None
     area = str(data.get("delivery_area", "")).lower()
     if area not in DeliveryArea.values:
         raise ChatOrderError(f"delivery_area must be one of {', '.join(DeliveryArea.values)}")
@@ -114,7 +122,7 @@ def place(data: dict, *, dry_run: bool = False) -> tuple[dict, bool]:
         with transaction.atomic():
             order = create_order(user=chat_user_for(phone), lines=lines, data=order_data, coupon_code="", auto_confirm=False)
             if not dry_run:
-                ChatOrder.objects.create(order=order, channel=channel, channel_user_id=str(data.get("channel_user_id", ""))[:80], request_id=request_id)
+                ChatOrder.objects.create(order=order, channel=channel, channel_user_id=str(data.get("channel_user_id", ""))[:80], request_id=request_id, contact_email=email)
             result = summary(order)
             if dry_run:
                 raise _Rollback

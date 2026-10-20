@@ -8,7 +8,7 @@ from apps.orders.models import Order
 from . import services
 from .models import Dealer, DealerOrder
 
-KIND_CLASS = {"dropship": "badge-info", "dealer": "badge-warning", "own": "badge-secondary"}
+KIND_STYLE = {"dropship": "background:#dbeafe;color:#1e3a8a", "dealer": "background:#fef3c7;color:#78350f", "own": "background:#e5e7eb;color:#1f2937"}   # dark text on a light pill: the theme's badge classes render white text
 
 
 class FulfilmentFilter(admin.SimpleListFilter):
@@ -117,7 +117,7 @@ def order_fulfilment(self, obj):
             seen[label] = kind
     if not seen:
         return "—"
-    return format_html_join(" ", '<span class="badge {}">{}</span>', ((KIND_CLASS[k], label) for label, k in seen.items()))
+    return format_html_join(" ", '<span style="{};padding:2px 8px;border-radius:999px;font-weight:600">{}</span>', ((KIND_STYLE[k], label) for label, k in seen.items()))
 
 
 # plug dealer features into the existing Order admin (same pattern as the supplier app)

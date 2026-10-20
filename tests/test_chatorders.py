@@ -116,6 +116,18 @@ def test_status_needs_the_matching_phone_and_no_email_goes_to_chat_customers(cli
 
 @override_settings(CHAT_ORDER_TOKEN=TOKEN)
 @pytest.mark.django_db
+def test_optional_email_gets_status_mail_and_a_bad_one_is_rejected(client, shop, django_capture_on_commit_callbacks):
+    assert post(client, {**BASE, "request_id": "e0", "email": "nope", "items": [{"sku": "PB1", "quantity": 1}]}).status_code == 400
+    number = post(client, {**BASE, "request_id": "e1", "email": "Rafi@Example.com", "items": [{"sku": "PB1", "quantity": 1}]}).json()["order_number"]
+    order = Order.objects.get(number=number)
+    assert order.chat_order.contact_email == "rafi@example.com"
+    with django_capture_on_commit_callbacks(execute=True):
+        change_status(order, Order.Status.CONFIRMED)
+    assert [m.to for m in mail.outbox] == [["rafi@example.com"]]
+
+
+@override_settings(CHAT_ORDER_TOKEN=TOKEN)
+@pytest.mark.django_db
 def test_admin_shows_where_the_order_came_from_without_extra_queries(client, shop, django_user_model):
     admin = django_user_model.objects.create_superuser("adm@example.com", "pass12345!x")
     admin.email_verified = True

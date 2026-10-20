@@ -35,7 +35,7 @@ class ChatOrderAdmin(admin.ModelAdmin):
 @admin.display(description="Via")
 def order_via(self, obj):
     chat = getattr(obj, "chat_order", None)
-    return format_html('<span class="badge badge-success">{}</span>', chat.get_channel_display()) if chat else "Website"
+    return format_html('<span style="background:#dbf0e4;color:#14532d;padding:2px 8px;border-radius:999px;font-weight:600">{}</span>', chat.get_channel_display()) if chat else "Website"
 
 
 OrderAdmin.list_display = (*OrderAdmin.list_display, "via")
