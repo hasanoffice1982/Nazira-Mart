@@ -170,3 +170,15 @@ def test_hide_products_lists_by_default_and_hides_with_apply(shop):
     assert Product.objects.get(sku="PB1").is_active
     call_command("hide_products", "PB1,NOPE", "--apply")
     assert not Product.objects.get(sku="PB1").is_active and Product.objects.get(sku="FR1").is_active
+
+
+@pytest.mark.django_db
+def test_old_price_is_struck_through_when_sizes_share_one_price(client, shop):
+    plain, frock, v18 = shop
+    frock.old_price = 1599
+    frock.save()
+    html = client.get(frock.get_absolute_url()).content.decode()
+    assert "<s " in html and "1,599" in html   # variants but one price: the discount still shows
+    ProductVariant.objects.create(product=frock, color=Color.objects.get_or_create(name="Pink")[0], size=Size.objects.get_or_create(name="20")[0], stock=2, sku="FR1-20", price=1499)
+    html = client.get(frock.get_absolute_url()).content.decode()
+    assert "1,599" not in html   # prices differ by size, so no single old price is shown
