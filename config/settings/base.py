@@ -121,6 +121,9 @@ APP_VERSION = env("APP_VERSION", default="dev")  # set to the git SHA by the dep
 SITE_URL = env("SITE_URL", default="http://localhost:8000")  # absolute links in emails sent outside a request
 SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="hello@narizmart.com")  # contact-form messages are delivered here
 # Console in dev, real SMTP when DEBUG is False (override with EMAIL_BACKEND).
+# Staff alert for every new order (website and chat). Comma-separated; empty = no alert. Subjects start with "[NEW ORDER]" so a mail filter can label them.
+ORDER_NOTIFY_EMAILS = env.list("ORDER_NOTIFY_EMAILS", default=[])
+
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND",
     default="django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",

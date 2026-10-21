@@ -11,7 +11,7 @@ from apps.cart.services import CartService, delivery_charge
 from apps.catalog.models import Product, ProductVariant
 
 from .models import Order, OrderItem, OrderStatusHistory
-from .notifications import send_status_email
+from .notifications import send_new_order_alert, send_status_email
 
 S = Order.Status
 TRANSITIONS: dict[str, set[str]] = {
@@ -113,6 +113,7 @@ def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon
         target.stock -= qty
         target.save(update_fields=["stock"])
     record_status(order, S.PENDING, note="Order placed — cash on delivery", by=user)
+    transaction.on_commit(lambda: send_new_order_alert(order.pk))   # a rolled-back quote never reaches this
     if auto_confirm:   # chat orders are never auto-confirmed: staff phone the customer first
         transaction.on_commit(lambda: _supplier_new_order_hook(order.pk))
     return order

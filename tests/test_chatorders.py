@@ -182,3 +182,21 @@ def test_old_price_is_struck_through_when_sizes_share_one_price(client, shop):
     ProductVariant.objects.create(product=frock, color=Color.objects.get_or_create(name="Pink")[0], size=Size.objects.get_or_create(name="20")[0], stock=2, sku="FR1-20", price=1499)
     html = client.get(frock.get_absolute_url()).content.decode()
     assert "1,599" not in html   # prices differ by size, so no single old price is shown
+
+
+@override_settings(CHAT_ORDER_TOKEN=TOKEN)
+@pytest.mark.django_db
+def test_new_order_alert_goes_to_staff_with_a_filterable_subject(client, shop, settings, django_capture_on_commit_callbacks):
+    settings.ORDER_NOTIFY_EMAILS = ["staff@example.com"]
+    with django_capture_on_commit_callbacks(execute=True):
+        assert post(client, {**BASE, "request_id": "n1", "items": [{"sku": "PB1", "quantity": 1}]}).status_code == 201
+    assert len(mail.outbox) == 1 and mail.outbox[0].to == ["staff@example.com"]
+    assert mail.outbox[0].subject.startswith("[NEW ORDER] NM-") and "WhatsApp" in mail.outbox[0].subject and "01712345678" in mail.outbox[0].body
+    mail.outbox.clear()
+    with django_capture_on_commit_callbacks(execute=True):
+        assert post(client, {**BASE, "request_id": "n2", "dry_run": True, "items": [{"sku": "PB1", "quantity": 1}]}).status_code == 200
+    assert mail.outbox == []   # a quote is not an order
+    settings.ORDER_NOTIFY_EMAILS = []
+    with django_capture_on_commit_callbacks(execute=True):
+        post(client, {**BASE, "request_id": "n3", "items": [{"sku": "PB1", "quantity": 1}]})
+    assert mail.outbox == []   # no recipient set: no alert

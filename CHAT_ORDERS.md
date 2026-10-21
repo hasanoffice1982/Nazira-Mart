@@ -40,3 +40,6 @@ Chat customers get a light account keyed by phone (`<phone>@chat.narizmart.inval
 
 ### Setup of the Telegram dealer bot
 Create a **new** bot with @BotFather (do not reuse the LinkedIn bot: one bot can feed only one Telegram trigger) and make an n8n Telegram credential `NarizMart Dealer Bot`. Create one group per dealer, add the bot and the dealer, put the group's chat id in the trigger's *Chat IDs*, pick the dealer sheet in the two Sheets nodes, publish.
+
+## New-order email to staff
+Set `ORDER_NOTIFY_EMAILS=narizmart.com@gmail.com` (comma-separated for several) in the server's `.env`, then restart. Every new order (website or chat) sends a plain-text alert whose subject starts with `[NEW ORDER]`, e.g. `[NEW ORDER] NM-56E2C938 · Messenger · ৳560`. In Gmail, create a filter for subject `[NEW ORDER]` → apply label "NarizMart Orders" and star it.
