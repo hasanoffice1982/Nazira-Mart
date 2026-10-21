@@ -12,7 +12,7 @@ from apps.core.tracking import product_event
 from .popular import popular_products
 from apps.core.cached import cached
 
-from .services import COLLECTIONS, active_categories, card_prefetch, search_products
+from .services import COLLECTIONS, active_categories, card_prefetch, recent_products, search_products
 
 
 class ProductListMixin:
@@ -48,6 +48,8 @@ class HomeView(ProductListMixin, TemplateView):
         site = SiteSettings.load()
         ctx["hero_slides"] = cached("home_hero_slides", lambda: list(HeroSlide.objects.filter(is_active=True).select_related("product__category").prefetch_related("product__images")[:10]))
         ctx["promo_banners"] = cached("home_promo_banners", lambda: list(PromoBanner.objects.filter(is_active=True)[:10]))
+        ctx["recent_products"] = recent_products()
+        ctx["recent_cols"] = {5: 5, 6: 3, 9: 3, 12: 4}.get(len(ctx["recent_products"]), 4)
         ctx["popular_products"] = popular_products(site)
         ctx["popular_cols"] = {5: 5, 6: 3, 9: 3, 12: 4}.get(len(ctx["popular_products"]), 4)
         ctx["benefits"] = cached("home_benefits", lambda: list(Benefit.objects.filter(is_active=True)))

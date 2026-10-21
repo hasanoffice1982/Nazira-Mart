@@ -105,7 +105,7 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         self.description = sanitize_field(self.description)
         super().save(*args, **kwargs)
-        cache.delete("popular_ids")
+        cache.delete_many(["popular_ids", "home_recent"])
 
     def get_absolute_url(self) -> str:
         return reverse("catalog:detail", args=[self.slug])

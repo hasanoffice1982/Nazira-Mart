@@ -36,7 +36,18 @@ def search_products(*, category: str = "", query: str = "", sort: str = "", coll
         qs = qs.filter(old_price__isnull=False, old_price__gt=F("price"))
     elif collection == "new" and not sort:
         sort = "new"
-    return qs.order_by(SORTS.get(sort, "id"))
+    return qs.order_by(SORTS.get(sort, "-id"))   # newest first unless another sort is chosen
+
+
+RECENT_COUNT = 6
+
+
+def recent_products(limit: int = RECENT_COUNT) -> list[Product]:
+    """The newest active products for the home page "Recent products" row. Cached for two minutes and cleared when a product is saved."""
+    def build() -> list[Product]:
+        return list(Product.objects.filter(is_active=True).select_related("category").prefetch_related(*card_prefetch()).order_by("-id")[:limit])
+
+    return cached("home_recent", build, ttl=120)
 
 
 def active_categories() -> list[Category]:

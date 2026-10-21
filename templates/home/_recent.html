@@ -1,0 +1,2 @@
+{% if recent_products %}<section class="container section" id="recent"><div class="section-top"><div><div class="section-label">Just in</div><h2 class="section-title">Recent products<span style="color:#44988b">.</span></h2><p class="section-sub">Our newest arrivals</p></div></div>
+<div class="product-grid popular-grid" style="--cols:{{ recent_cols }}">{% for p in recent_products %}{% include "components/product_card.html" %}{% endfor %}</div></section>{% endif %}
