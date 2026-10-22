@@ -68,7 +68,7 @@ def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon
     # Lock rows so concurrent checkouts cannot oversell (no-op on SQLite).
     products = {p.pk: p for p in Product.objects.select_for_update().filter(pk__in={l[0] for l in lines}, is_active=True)}
     variants = {
-        v.pk: v for v in ProductVariant.objects.select_for_update(of=("self",)).filter(pk__in={l[1] for l in lines if l[1]}, is_active=True).select_related("color", "size")
+        v.pk: v for v in ProductVariant.objects.select_for_update().filter(pk__in={l[1] for l in lines if l[1]}, is_active=True).select_related("color", "size")
     }
     # a product with active variants can only be bought through a variant
     has_variants = set(ProductVariant.objects.filter(product_id__in=products, is_active=True).values_list("product_id", flat=True))
