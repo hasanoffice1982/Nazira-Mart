@@ -4,7 +4,7 @@ import logging
 
 from decimal import Decimal
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import F
 
 from apps.cart.services import CartService, delivery_charge
@@ -67,9 +67,9 @@ def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon
 
     # Lock rows so concurrent checkouts cannot oversell (no-op on SQLite).
     products = {p.pk: p for p in Product.objects.select_for_update().filter(pk__in={l[0] for l in lines}, is_active=True)}
-    variants = {
-        v.pk: v for v in ProductVariant.objects.select_for_update().filter(pk__in={l[1] for l in lines if l[1]}, is_active=True).select_related("color", "size")
-    }
+    # colour/size are optional joins: PostgreSQL only allows FOR UPDATE on them with "OF self"; MariaDB/MySQL do not support "OF" at all
+    lock_variants = ProductVariant.objects.select_for_update(of=("self",) if connection.features.has_select_for_update_of else ())
+    variants = {v.pk: v for v in lock_variants.filter(pk__in={l[1] for l in lines if l[1]}, is_active=True).select_related("color", "size")}
     # a product with active variants can only be bought through a variant
     has_variants = set(ProductVariant.objects.filter(product_id__in=products, is_active=True).values_list("product_id", flat=True))
 
