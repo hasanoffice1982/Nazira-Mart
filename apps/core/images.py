@@ -66,6 +66,36 @@ def rendition_url(file, width: int) -> str:
     return default_storage.url(name) if name else (file.url if file else "")
 
 
+def jpeg_rendition_url(file, width: int = 800) -> str:
+    """URL of a resized JPEG copy. Messenger/WhatsApp image messages do not reliably accept WebP, so chat bots use this one.
+    Created on first use and cached in storage; empty string if the source can't be read."""
+    if not file:
+        return ""
+    digest = hashlib.sha1(file.name.encode()).hexdigest()[:20]
+    name = f"{ROOT}/jpg{width}/{digest}.jpg"
+    storage = default_storage
+    if not storage.exists(name):
+        try:
+            with storage.open(file.name, "rb") as fh, Image.open(fh) as img:
+                img = ImageOps.exif_transpose(img)
+                if img.mode in ("RGBA", "LA", "P"):
+                    img = img.convert("RGBA")
+                    flat = Image.new("RGB", img.size, (255, 255, 255))   # transparent areas become white
+                    flat.paste(img, mask=img.getchannel("A"))
+                    img = flat
+                elif img.mode != "RGB":
+                    img = img.convert("RGB")
+                if img.width > width:
+                    img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
+                buf = BytesIO()
+                img.save(buf, "JPEG", quality=85, optimize=True)
+        except Exception:  # noqa: BLE001
+            logger.exception("could not build jpeg copy of %s", file.name)
+            return ""
+        storage.save(name, ContentFile(buf.getvalue()))
+    return storage.url(name)
+
+
 def srcset(file, widths=(320, 640, 960)) -> str:
     parts = []
     for w in widths:

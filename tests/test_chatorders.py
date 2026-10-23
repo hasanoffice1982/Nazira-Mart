@@ -200,3 +200,36 @@ def test_new_order_alert_goes_to_staff_with_a_filterable_subject(client, shop, s
     with django_capture_on_commit_callbacks(execute=True):
         post(client, {**BASE, "request_id": "n3", "items": [{"sku": "PB1", "quantity": 1}]})
     assert mail.outbox == []   # no recipient set: no alert
+
+
+@pytest.mark.django_db
+@override_settings(CHAT_ORDER_TOKEN=TOKEN)
+def test_product_search_returns_jpeg_photos_for_chat_images(client, shop, settings, tmp_path):
+    import io
+
+    from django.core.files.base import ContentFile
+    from PIL import Image
+
+    from apps.catalog.models import ProductImage
+
+    settings.MEDIA_ROOT = tmp_path
+    plain, frock, _ = shop
+
+    def webp(color):
+        buf = io.BytesIO()
+        Image.new("RGBA", (1000, 600), color).save(buf, "WEBP")   # stored photos are WebP; Messenger needs JPEG
+        return ContentFile(buf.getvalue(), name="p.webp")
+
+    for pos, color in enumerate(["red", "green", "blue", "black"]):
+        ProductImage.objects.create(product=plain, image=webp(color), position=pos)
+
+    item = client.get("/api/chat/products/?q=plain", **H).json()["products"][0]
+    assert len(item["photos"]) == 3                                  # at most three
+    assert all(u.endswith(".jpg") and u.startswith("http") for u in item["photos"])
+    assert item["image"].endswith(".webp")                           # the original field is unchanged
+    jpeg_path = tmp_path / item["photos"][0].split("/media/", 1)[1]
+    with Image.open(jpeg_path) as im:
+        assert im.format == "JPEG" and im.width == 800
+
+    # a product without photos still answers, with an empty list
+    assert client.get("/api/chat/products/?q=frock", **H).json()["products"][0]["photos"] == []

@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django_ratelimit.decorators import ratelimit
 
 from apps.catalog.services import search_products
+from apps.core.images import jpeg_rendition_url
 
 from . import services
 
@@ -46,9 +47,13 @@ def products(request):
     for p in found:
         variants = [{"sku": v.sku, "label": v.label, "price": str(v.unit_price), "in_stock": v.stock > 0} for v in p.active_variants]
         cover = p.cover_image
+        shared = [i.image for i in p.shared_images][:3] or ([cover] if cover else [])
+        photos = [u for u in (jpeg_rendition_url(f) for f in shared) if u]
         out.append({
             "sku": p.sku, "name": p.name, "category": p.category.name, "price": str(p.from_price), "price_varies": p.price_varies, "in_stock": p.in_stock,
-            "url": _abs(request, p.get_absolute_url()), "image": _abs(request, cover.url) if cover else "", "variants": variants,
+            "url": _abs(request, p.get_absolute_url()), "image": _abs(request, cover.url) if cover else "",
+            "photos": [_abs(request, u) for u in photos],   # JPEG copies (up to 3) for chat image messages
+            "variants": variants,
             "needs_variant": bool(variants),
         })
     return JsonResponse({"products": out})
