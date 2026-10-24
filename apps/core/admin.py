@@ -1,8 +1,11 @@
+import logging
 import re
+import traceback
 
 from adminsortable2.admin import SortableAdminBase, SortableInlineAdminMixin
 from django import forms
 from django.contrib import admin
+from django.http import HttpResponse
 
 from .widgets import RichTextAdminMixin
 from .models import Benefit, ContactMessage, HeroSlide, NewsletterSubscriber, Page, PromoBanner, SiteSettings
@@ -195,7 +198,25 @@ class ContactMessageAdmin(admin.ModelAdmin):
 from axes.admin import AccessAttemptAdmin, AccessFailureLogAdmin, AccessLogAdmin  # noqa: E402
 from axes.models import AccessAttempt, AccessFailureLog, AccessLog  # noqa: E402
 
+
+
+class ShowErrorToSuperusersMixin:
+    """If the page fails, log it and show the error text to superusers instead of a bare 500 (the server log is not always reachable on shared hosting)."""
+
+    def changelist_view(self, request, extra_context=None):
+        try:
+            response = super().changelist_view(request, extra_context)
+            if hasattr(response, "render"):
+                response.render()   # template errors surface here, not above
+            return response
+        except Exception:  # noqa: BLE001
+            logging.getLogger("apps.core").exception("admin list failed: %s", request.path)
+            if request.user.is_superuser:
+                return HttpResponse(traceback.format_exc(), content_type="text/plain; charset=utf-8", status=500)
+            raise
+
+
 for _model, _admin in ((AccessAttempt, AccessAttemptAdmin), (AccessLog, AccessLogAdmin), (AccessFailureLog, AccessFailureLogAdmin)):
     if admin.site.is_registered(_model):
         admin.site.unregister(_model)
-    admin.site.register(_model, type(_admin.__name__, (_admin,), {"date_hierarchy": None}))
+    admin.site.register(_model, type(_admin.__name__, (ShowErrorToSuperusersMixin, _admin), {"date_hierarchy": None}))

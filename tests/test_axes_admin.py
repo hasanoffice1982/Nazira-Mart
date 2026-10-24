@@ -23,3 +23,19 @@ def test_axes_admin_pages_open(name):
     session[VERIFIED_KEY] = True
     session.save()
     assert client.get(reverse(f"admin:axes_{name}_changelist")).status_code == 200
+
+
+def test_a_failing_axes_page_shows_the_error_to_superusers_only(monkeypatch):
+    from axes.admin import AccessLogAdmin
+
+    def boom(self, request, extra_context=None):
+        raise RuntimeError("boom-from-test")
+
+    monkeypatch.setattr(AccessLogAdmin, "changelist_view", boom)
+    client = Client(raise_request_exception=False)
+    client.force_login(get_user_model().objects.create_superuser("boss@example.com", "pass12345!x"))
+    session = client.session
+    session[VERIFIED_KEY] = True
+    session.save()
+    resp = client.get(reverse("admin:axes_accesslog_changelist"))
+    assert resp.status_code == 500 and resp["Content-Type"].startswith("text/plain") and b"boom-from-test" in resp.content
