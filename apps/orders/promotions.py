@@ -22,6 +22,7 @@ class Evaluation:
     coupon_error: str = ""       # why a typed code can't be used (shown next to the code box)
     coupon_note: str = ""        # info, e.g. the automatic discount is already better
     nudge: str = ""              # "Spend X more to get 10% off"
+    free_delivery: bool = False  # the applied code removes the delivery charge (the money discount is then 0)
 
     @property
     def label(self) -> str:
@@ -69,8 +70,11 @@ def evaluate_for_request(request, subtotal: Decimal, code: str = "") -> Evaluati
     return memo[key]
 
 
-def evaluate(subtotal: Decimal, user=None, code: str = "") -> Evaluation:
-    """Work out the discount for this products total. Safe to call often; reads promotions fresh from the database."""
+def evaluate(subtotal: Decimal, user=None, code: str = "", delivery: Decimal | None = None) -> Evaluation:
+    """Work out the discount for this products total. Safe to call often; reads promotions fresh from the database.
+
+    `delivery` is the delivery charge of the chosen area when known (placing an order); on the cart/checkout page it is not
+    known yet, so a free-delivery code is valued at the Dhaka charge when it is compared with other discounts."""
     result = Evaluation()
     now = timezone.now()
     live = Promotion.objects.filter(is_active=True).filter(Q(starts_at__isnull=True) | Q(starts_at__lte=now)).filter(Q(ends_at__isnull=True) | Q(ends_at__gt=now))
@@ -98,11 +102,19 @@ def evaluate(subtotal: Decimal, user=None, code: str = "") -> Evaluation:
             error = _eligibility_error(promo, subtotal, user)
             if error:
                 result.coupon_error = error
+            elif promo.is_free_delivery:
+                worth = delivery if delivery is not None else SiteSettings.load().delivery_charge_dhaka
+                if worth > 0:
+                    coupon = (worth, promo)
+                else:
+                    result.coupon_note = "Delivery is already free for this order."
             else:
                 coupon = (promo.amount_for(subtotal), promo)
 
     if coupon and (best_auto is None or coupon[0] >= best_auto[0]):
         result.amount, result.promotion, result.coupon_code = coupon[0], coupon[1], code
+        if coupon[1].is_free_delivery:
+            result.free_delivery, result.amount = True, Decimal(0)
     elif best_auto:
         result.amount, result.promotion = best_auto
         if coupon:

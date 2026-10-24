@@ -144,10 +144,11 @@ class Promotion(models.Model):
     class Kind(models.TextChoices):
         PERCENT = "percent", "Percent off"
         FIXED = "fixed", "Fixed amount off"
+        FREE_DELIVERY = "free_delivery", "Free delivery (needs a code)"
 
     name = models.CharField(max_length=120, help_text="Shown to the customer, e.g. “10% off orders over ৳5,000”")
     code = models.CharField(max_length=30, blank=True, help_text="Leave empty for an automatic discount. Otherwise customers type this at checkout (not case sensitive).")
-    kind = models.CharField("Discount type", max_length=8, choices=Kind.choices, default=Kind.PERCENT)
+    kind = models.CharField("Discount type", max_length=16, choices=Kind.choices, default=Kind.PERCENT)
     value = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))], help_text="Percent (1–100) or an amount in your currency")
     min_subtotal = models.DecimalField("Minimum order", max_digits=12, decimal_places=2, default=0, help_text="Products total (before delivery) needed to qualify. 0 = no minimum.")
     max_discount = models.DecimalField("Maximum discount", max_digits=12, decimal_places=2, null=True, blank=True, help_text="Optional cap, mostly for percent discounts")
@@ -176,6 +177,8 @@ class Promotion(models.Model):
             raise ValidationError({"value": "A percent discount can't be more than 100."})
         if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
             raise ValidationError({"ends_at": "The end must be after the start."})
+        if self.kind == self.Kind.FREE_DELIVERY and not (self.code or "").strip():
+            raise ValidationError({"code": "Free delivery works through a code: enter one (for example FREESHIP)."})
 
     def save(self, *args, **kwargs):
         self.code = self.code.strip().upper()
@@ -185,7 +188,13 @@ class Promotion(models.Model):
         now = now or timezone.now()
         return (self.starts_at is None or self.starts_at <= now) and (self.ends_at is None or now < self.ends_at)
 
+    @property
+    def is_free_delivery(self) -> bool:
+        return self.kind == self.Kind.FREE_DELIVERY
+
     def amount_for(self, subtotal: Decimal) -> Decimal:
+        if self.is_free_delivery:
+            return Decimal(0)   # takes the delivery charge off instead of money off the products
         if self.kind == self.Kind.PERCENT:
             amount = (subtotal * self.value / Decimal(100)).quantize(Decimal("0.01"))
         else:

@@ -44,7 +44,7 @@ def normalise_lines(lines) -> list[tuple[int, int, int]]:
     return [(l[0], 0, l[1]) if len(l) == 2 else (l[0], l[1], l[2]) for l in lines]
 
 
-def _discount_for(user, subtotal: Decimal, coupon_code: str):
+def _discount_for(user, subtotal: Decimal, coupon_code: str, delivery: Decimal | None = None):
     """Re-checked inside the order transaction, with the promotion rows locked so limited offers can't be over-claimed."""
     from .models import Promotion
     from .promotions import evaluate, normalise_code
@@ -52,10 +52,10 @@ def _discount_for(user, subtotal: Decimal, coupon_code: str):
     ids = list(Promotion.objects.filter(is_active=True).values_list("pk", flat=True))
     if ids:
         list(Promotion.objects.select_for_update().filter(pk__in=ids).values_list("pk", flat=True))  # lock; no-op on SQLite
-    result = evaluate(subtotal, user, coupon_code)
+    result = evaluate(subtotal, user, coupon_code, delivery)
     if normalise_code(coupon_code) and result.coupon_error:
         raise OrderError(f"Your coupon couldn't be applied: {result.coupon_error}")
-    return result.amount, result.promotion, result.coupon_code
+    return result.amount, result.promotion, result.coupon_code, result.free_delivery
 
 
 @transaction.atomic
@@ -93,7 +93,9 @@ def create_order(*, user, lines, data: dict, billing: dict | None = None, coupon
         resolved.append((product, variant, price, qty))
 
     charge = delivery_charge(subtotal, data["delivery_area"])  # free-delivery threshold looks at the products total before any discount
-    discount, promotion, applied_code = _discount_for(user, subtotal, coupon_code)
+    discount, promotion, applied_code, free_delivery = _discount_for(user, subtotal, coupon_code, charge)
+    if free_delivery:
+        charge = Decimal(0)
     order = Order.objects.create(
         number=Order.new_number(), user=user, subtotal=subtotal, delivery_charge=charge, total=subtotal - discount + charge,
         discount=discount, promotion=promotion, promotion_label=promotion.name if promotion else "", coupon_code=applied_code,

@@ -235,3 +235,44 @@ def test_cart_drawer_shows_nudge_then_discount(client):
     fill_bag(client, "smart-active-watch", 2)
     page = client.get("/").content.decode()
     assert "drawer-discount" in page and "10% off orders over 5,000" in page
+
+
+# ---- free-delivery code (e.g. FREESHIP for a first order) ----------------------------------------------------------
+def free_ship(**kw):
+    return Promotion.objects.create(**{**dict(name="Free delivery on your first order", code="FREESHIP", kind="free_delivery", value=D("1"), per_customer_limit=1), **kw})
+
+
+@pytest.mark.parametrize("area", ["dhaka", "sub", "outside"])
+def test_free_delivery_code_removes_the_whole_delivery_charge_in_any_area(buyer, area):
+    free_ship()
+    p = Product.objects.get(slug="smart-active-watch")
+    paid = create_order(user=buyer, lines=[(p.pk, 0, 1)], data={**DELIVERY, "delivery_area": area})
+    free = create_order(user=buyer, lines=[(p.pk, 0, 1)], data={**DELIVERY, "delivery_area": area}, coupon_code="freeship")
+    assert paid.delivery_charge > 0
+    assert free.delivery_charge == 0 and free.discount == 0 and free.total == free.subtotal
+    assert free.coupon_code == "FREESHIP" and free.promotion.is_free_delivery
+
+
+def test_free_delivery_code_is_once_per_customer(buyer):
+    free_ship()
+    order(buyer, qty=1, code="FREESHIP")
+    with pytest.raises(OrderError, match="already used"):
+        order(buyer, qty=1, code="FREESHIP")
+
+
+def test_free_delivery_needs_a_code():
+    with pytest.raises(ValidationError):
+        Promotion(name="Free delivery", kind="free_delivery", value=D("1")).full_clean()
+
+
+def test_free_delivery_code_is_checked_like_any_other_code():
+    free_ship()
+    deal = evaluate(D("1000"), None, "FREESHIP")
+    assert deal.free_delivery and deal.coupon_code == "FREESHIP" and deal.amount == 0
+    assert evaluate(D("1000"), None, "NOPE").coupon_error
+
+
+def test_free_delivery_code_is_not_used_up_when_delivery_is_already_free(buyer):
+    free_ship()
+    deal = evaluate(D("9000"), buyer, "FREESHIP", delivery=D("0"))
+    assert not deal.free_delivery and deal.promotion is None and "already free" in deal.coupon_note

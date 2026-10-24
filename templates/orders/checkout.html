@@ -28,6 +28,6 @@
 {% if deal.nudge %}<p class="promo-nudge">{{ deal.nudge }}</p>{% endif %}
 <div class="coupon-box">{% if deal.coupon_code %}<form method="post" action="{% url 'orders:coupon_remove' %}">{% csrf_token %}<span class="coupon-on">Code <b>{{ deal.coupon_code }}</b> applied</span> <button class="link-btn" type="submit">Remove</button></form>
 {% else %}<form method="post" action="{% url 'orders:coupon_apply' %}" class="coupon-form">{% csrf_token %}<label class="sr-only" for="coupon">Coupon code</label><input id="coupon" name="code" value="{{ coupon }}" placeholder="Coupon code" autocomplete="off" maxlength="30"><button class="btn btn-light" type="submit">Apply</button></form>{% if deal.coupon_error %}<p class="field-error">{{ deal.coupon_error }}</p>{% endif %}{% endif %}</div>
-<div class="sum-line"><span>Delivery (Dhaka / outside)</span><b>{{ currency }}{{ charge_dhaka|floatformat:"-2g" }} / {{ currency }}{{ charge_outside|floatformat:"-2g" }}</b></div>
+{% if deal.free_delivery %}<div class="sum-line sum-discount"><span>Delivery <small>({{ deal.coupon_code }})</small></span><b>Free</b></div>{% else %}<div class="sum-line"><span>Delivery (Dhaka / outside)</span><b>{{ currency }}{{ charge_dhaka|floatformat:"-2g" }} / {{ currency }}{{ charge_outside|floatformat:"-2g" }}</b></div>{% endif %}
 <p class="muted">Final total is confirmed by the server when you place the order.</p></aside></div></section>
 {% endblock %}
