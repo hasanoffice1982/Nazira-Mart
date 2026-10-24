@@ -187,3 +187,15 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+# --- django-axes admin pages --------------------------------------------------------------------------------------
+# axes ships its three log pages with a date drill-down (date_hierarchy). On MariaDB without the time-zone tables (shared hosting)
+# that drill-down fails and the page returns a 500, the same reason the Orders list has none. The date filter on the right stays.
+from axes.admin import AccessAttemptAdmin, AccessFailureLogAdmin, AccessLogAdmin  # noqa: E402
+from axes.models import AccessAttempt, AccessFailureLog, AccessLog  # noqa: E402
+
+for _model, _admin in ((AccessAttempt, AccessAttemptAdmin), (AccessLog, AccessLogAdmin), (AccessFailureLog, AccessFailureLogAdmin)):
+    if admin.site.is_registered(_model):
+        admin.site.unregister(_model)
+    admin.site.register(_model, type(_admin.__name__, (_admin,), {"date_hierarchy": None}))
