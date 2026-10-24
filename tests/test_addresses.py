@@ -223,9 +223,6 @@ def test_user_without_addresses_sees_plain_form(client, user):
 
 
 def test_guest_checkout_saves_first_address_as_default(client):
-    from django.core import mail
-    import re
-
     add_to_cart(client)
     client.post(reverse("orders:checkout"), {"email": "g@example.com", **{k: v for k, v in ADDR.items() if k != "label"}})
     u = User.objects.get(email="g@example.com")
