@@ -8,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django_ratelimit.decorators import ratelimit
 
-from apps.catalog.services import search_products
 from apps.core.images import jpeg_rendition_url
 
 from . import services
@@ -43,7 +42,7 @@ def products(request):
     raw_limit = request.GET.get("limit", "5")
     limit = min(max(int(raw_limit), 1), 8) if raw_limit.isdigit() else 5
     out = []
-    found = search_products(query=q)[:limit] if len(q) >= 2 else []
+    found = services.find_products(q, limit) if len(q) >= 2 else []
     for p in found:
         variants = [{"sku": v.sku, "label": v.label, "price": str(v.unit_price), "in_stock": v.stock > 0} for v in p.active_variants]
         cover = p.cover_image

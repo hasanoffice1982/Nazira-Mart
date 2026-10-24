@@ -50,6 +50,17 @@ def test_product_search_shows_variants_and_stock(client, shop):
 
 @override_settings(CHAT_ORDER_TOKEN=TOKEN)
 @pytest.mark.django_db
+def test_long_photo_style_phrases_still_find_products(client, shop):
+    def skus(q):
+        return [p["sku"] for p in client.get("/api/chat/products/", {"q": q}, **H).json()["products"]]
+
+    assert "PB1" in skus("Brown handbag with shoulder strap")   # synonym + word match
+    assert skus("pink kids frock with floral print")[0] == "FR1"
+    assert skus("sparkly unicorn hoodie xyz") == []                 # nothing matches: stays empty
+
+
+@override_settings(CHAT_ORDER_TOKEN=TOKEN)
+@pytest.mark.django_db
 def test_quote_prices_the_order_but_saves_nothing(client, shop):
     plain, frock, v18 = shop
     r = post(client, {**BASE, "dry_run": True, "items": [{"sku": "PB1", "quantity": 2}, {"sku": "FR1-18", "quantity": 1}]})

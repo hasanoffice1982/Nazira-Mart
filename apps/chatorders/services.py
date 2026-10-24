@@ -7,6 +7,7 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import DeliveryArea, User
@@ -145,3 +146,35 @@ def status_for(phone: str, number: str) -> dict | None:
     out = summary(order)
     out.update(status_label=order.get_status_display(), tracking_number=order.tracking_number, placed_at=order.created_at.isoformat())
     return out
+
+
+_STOP_WORDS = {"a", "an", "the", "and", "with", "for", "of", "in", "on", "to", "this", "that", "dot", "dots", "print", "printed", "color", "colour", "design", "style", "brown", "black", "white", "red", "blue", "green", "pink", "yellow"}
+_SYNONYMS = {"handbag": "bag", "handbags": "bag", "purse": "bag", "crossbody": "bag", "shoulder": "bag", "suit": "three piece", "threepiece": "three piece", "gown": "frock", "dress": "frock"}
+
+
+def find_products(query: str, limit: int):
+    """Forgiving search for the bot: the whole phrase first, then single words ranked by how many match. Bots (and photo captions) send long phrases."""
+    from apps.catalog.services import search_products
+
+    found = list(search_products(query=query)[:limit])
+    if found:
+        return found
+    words = []
+    for w in query.lower().replace("-", " ").split():
+        w = w.strip(".,!?()[]\"'")
+        w = _SYNONYMS.get(w, w)
+        for part in w.split():
+            if len(part) >= 3 and part not in _STOP_WORDS and part not in words:
+                words.append(part)
+    if not words:
+        return []
+    cond = Q()
+    for w in words:
+        cond |= Q(name__icontains=w) | Q(category__name__icontains=w)
+    candidates = list(search_products().filter(cond)[:60])
+
+    def score(p) -> int:
+        hay = f"{p.name} {p.category.name}".lower()
+        return sum(w in hay for w in words)
+
+    return sorted(candidates, key=score, reverse=True)[:limit]   # stable: newest first among equal scores
