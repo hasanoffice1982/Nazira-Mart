@@ -12,7 +12,7 @@ REQUIRED_WHEN_NEW = ("full_name", "phone", "address", "city", "delivery_area")
 
 
 class CheckoutForm(HoneypotMixin, forms.Form):
-    email = forms.EmailField(help_text="We'll email a 6-digit code to confirm your order.")
+    email = forms.EmailField(help_text="Your order confirmation is sent here.")
     address_choice = forms.ChoiceField(label="Deliver to", widget=forms.RadioSelect, required=False)
     full_name = forms.CharField(max_length=120, required=False)
     phone = forms.CharField(max_length=20, required=False, help_text="e.g. 01712345678")
@@ -29,8 +29,8 @@ class CheckoutForm(HoneypotMixin, forms.Form):
         self.present: PresentAddress | None = None
         authed = user is not None and user.is_authenticated
         if authed:
-            if user.email_verified:
-                del self.fields["email"]  # verified customers check out directly
+            if user.email_verified or not user.has_usable_password():
+                del self.fields["email"]  # verified customers (and guest-checkout accounts) check out directly
             else:
                 self.fields["email"].initial = user.email
                 self.fields["email"].disabled = True  # must confirm the address on their account

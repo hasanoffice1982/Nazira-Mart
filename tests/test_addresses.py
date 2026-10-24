@@ -222,14 +222,12 @@ def test_user_without_addresses_sees_plain_form(client, user):
     assert "address_choice" not in html and "save_address" in html
 
 
-def test_guest_confirmation_saves_first_address_as_default(client):
+def test_guest_checkout_saves_first_address_as_default(client):
     from django.core import mail
     import re
 
     add_to_cart(client)
     client.post(reverse("orders:checkout"), {"email": "g@example.com", **{k: v for k, v in ADDR.items() if k != "label"}})
-    code = re.search(r"\n(\d{6})\n", mail.outbox[0].body).group(1)
-    client.post(reverse("orders:confirm"), {"code": code})
     u = User.objects.get(email="g@example.com")
     saved = u.shipping_addresses.get()
     assert saved.is_default and saved.address == "House 1, Road 2"

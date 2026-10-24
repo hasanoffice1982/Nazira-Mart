@@ -32,7 +32,13 @@ ADDRESS_FIELDS = ("full_name", "phone", "address", "city", "delivery_area", "not
 
 
 def needs_email_confirmation(user) -> bool:
-    return not (user.is_authenticated and user.email_verified)
+    """Signed-in customers skip the emailed code when they verified their email, or when the account came from a guest checkout
+    (no password yet: its owner proves the inbox later through the set-password link in the order email)."""
+    return not (user.is_authenticated and (user.email_verified or not user.has_usable_password()))
+
+
+def email_has_account(email: str) -> bool:
+    return User.objects.filter(email__iexact=email.strip()).exists()
 
 
 def address_data(cleaned: dict) -> dict:
@@ -115,6 +121,25 @@ def complete_confirmation(request, otp: CheckoutOTP) -> Order:
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     twofactor.mark_verified(request)  # they just entered an emailed code; don't ask for a second one
     transaction.on_commit(lambda: send_order_confirmation(request, order, new_account))
+    return order
+
+
+def place_guest_order(request, email: str, cleaned: dict) -> Order:
+    """First-time guest (an email we have never seen): no emailed code, so checkout is one smooth step.
+    Creates the account without a password, places the order and signs the guest in; the order email carries a set-password link.
+    Existing emails still confirm by code (ConfirmCheckoutView), otherwise anyone could sign in to someone else's account."""
+    email, data = email.strip().lower(), address_data(cleaned)
+    with transaction.atomic():
+        user = User(email=email, first_name=data["full_name"].split()[0][:150], phone=data["phone"])
+        user.set_unusable_password()
+        user.save()
+        order = create_order(user=user, lines=lines_from_cart(get_cart(request)), data=data, billing=data, coupon_code=request.session.get(COUPON_SESSION_KEY, ""))
+        save_new_shipping(user, data)   # the first address becomes the default
+        transaction.on_commit(lambda: send_order_confirmation(request, order, True))
+    get_cart(request).clear()   # clear the guest cart BEFORE login so it isn't merged back in
+    request.session.pop(COUPON_SESSION_KEY, None)
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    twofactor.mark_verified(request)
     return order
 
 

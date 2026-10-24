@@ -19,8 +19,8 @@
 </div>
 {% include "components/field.html" with field=form.hp_contact %}
 <div class="pay-box"><b>Payment:</b> Cash on delivery — pay when your order arrives.</div>
-<button class="btn btn-dark btn-full" type="submit">{% if guest %}Continue — email me a code{% else %}Place order{% endif %} · {{ currency }}{{ payable|floatformat:"-2g" }}</button>
-{% if guest %}<p class="muted center" style="margin-top:12px">Your order is placed after you enter the 6-digit code we email you. This keeps fake orders out.</p>{% endif %}</form>
+<button class="btn btn-dark btn-full" type="submit">Place order · {{ currency }}{{ payable|floatformat:"-2g" }}</button>
+{% if guest %}<p class="muted center" style="margin-top:12px">Cash on delivery: pay when your order arrives. No code needed.</p>{% endif %}</form>
 <aside class="auth-card summary"><h3>Your bag</h3>
 {% for l in lines %}<div class="sum-line"><span>{{ l.product.name }}{% if l.label %} ({{ l.label }}){% endif %} × {{ l.quantity }}</span><b>{{ currency }}{{ l.total|floatformat:"-2g" }}</b></div>{% endfor %}
 <div class="sum-line"><span>Subtotal</span><b>{{ currency }}{{ subtotal|floatformat:"-2g" }}</b></div>

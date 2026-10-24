@@ -196,6 +196,7 @@ def test_signed_in_customer_places_order_with_coupon_and_sees_it(client, buyer):
 def test_coupon_survives_the_guest_email_code_step(client):
     import re
 
+    User.objects.create_user("guest@example.com", "x-Pass-1234567")   # a known email still confirms by code
     promo(code="SAVE5", name="Save five", value=D("5"), min_subtotal=D("0"))
     fill_bag(client, "retro-everyday-sunglasses", 1)
     client.post(reverse("orders:coupon_apply"), {"code": "SAVE5"})
@@ -276,3 +277,12 @@ def test_free_delivery_code_is_not_used_up_when_delivery_is_already_free(buyer):
     free_ship()
     deal = evaluate(D("9000"), buyer, "FREESHIP", delivery=D("0"))
     assert not deal.free_delivery and deal.promotion is None and "already free" in deal.coupon_note
+
+
+def test_coupon_applies_to_a_first_time_guest_order(client):
+    promo(code="SAVE5", name="Save five", value=D("5"), min_subtotal=D("0"))
+    fill_bag(client, "retro-everyday-sunglasses", 1)
+    client.post(reverse("orders:coupon_apply"), {"code": "SAVE5"})
+    client.post(reverse("orders:checkout"), {"email": "newbie@example.com", **DELIVERY})
+    placed = Order.objects.get()
+    assert placed.coupon_code == "SAVE5" and placed.discount == D("34.50")

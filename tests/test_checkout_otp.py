@@ -29,7 +29,17 @@ def code_from_mail(index=-1):
     return re.search(r"\n(\d{6})\n", mail.outbox[index].body).group(1)
 
 
-def start(client, qty=2, **over):
+def known_account(email="guest@example.com"):
+    """An email that already has an account: the only kind of guest that still confirms by emailed code."""
+    u = User(email=email)
+    u.set_unusable_password()
+    u.save()
+    return u
+
+
+def start(client, qty=2, known=True, **over):
+    if known:
+        known_account()
     p = Product.objects.get(art_type="headphones")
     for _ in range(qty):
         client.post(reverse("cart:add", args=[p.pk]))
@@ -40,10 +50,10 @@ def confirm(client, code):
     return client.post(reverse("orders:confirm"), {"code": code})
 
 
-def test_guest_checkout_creates_nothing_until_code_entered(client):
+def test_known_email_creates_nothing_until_code_entered(client):
     p, resp = start(client)
     assert resp.status_code == 302 and resp["Location"] == reverse("orders:confirm")
-    assert not Order.objects.exists() and not User.objects.filter(email="guest@example.com").exists()
+    assert not Order.objects.exists()
     p.refresh_from_db()
     assert p.stock == 40  # untouched
     assert len(mail.outbox) == 1 and "confirmation code" in mail.outbox[0].subject
@@ -55,7 +65,7 @@ def test_code_is_stored_hashed(client):
     assert code not in CheckoutOTP.objects.get().code_hash
 
 
-def test_correct_code_places_order_creates_account_logs_in(client):
+def test_correct_code_places_order_verifies_account_logs_in(client):
     p, _ = start(client)
     resp = confirm(client, code_from_mail())
     order = Order.objects.get()
@@ -71,9 +81,8 @@ def test_correct_code_places_order_creates_account_logs_in(client):
 
 
 def test_confirmation_email_contains_set_password_link_that_works(client, django_capture_on_commit_callbacks):
-    start(client)
     with django_capture_on_commit_callbacks(execute=True):  # the email is sent after the transaction commits
-        confirm(client, code_from_mail())
+        start(client, known=False)
     body = mail.outbox[-1].body
     assert "Order NM-" in body and "Choose a password" in body
     link = re.search(r"http://testserver(/accounts/password/reset/\S+)", body).group(1)
@@ -151,12 +160,11 @@ def test_stock_rechecked_at_confirmation(client):
     Product.objects.filter(pk=p.pk).update(stock=1)  # sold elsewhere while waiting
     resp = confirm(client, code_from_mail())
     assert b"only 1" in resp.content and not Order.objects.exists()
-    assert not User.objects.filter(email="guest@example.com").exists()  # rolled back with the order
 
 
 def test_existing_customer_is_logged_in_and_order_attached(client):
     owner = User.objects.create_user("guest@example.com", "x-Pass-1234567", first_name="Old")
-    start(client)
+    start(client, known=False)
     confirm(client, code_from_mail())
     assert Order.objects.get().user == owner
     owner.refresh_from_db()
@@ -166,7 +174,7 @@ def test_existing_customer_is_logged_in_and_order_attached(client):
 
 def test_staff_email_cannot_be_used_for_guest_orders(client):
     User.objects.create_superuser("guest@example.com", "x-Pass-1234567")
-    _, resp = start(client)
+    _, resp = start(client, known=False)
     assert resp.status_code == 200 and b"different email" in resp.content and not CheckoutOTP.objects.exists()
     assert len(mail.outbox) == 0
 
@@ -184,6 +192,7 @@ def test_verified_customer_skips_the_code(client):
 
 
 def test_checkout_otp_emails_are_rate_limited_per_address(client):
+    known_account()
     p = Product.objects.first()
     client.post(reverse("cart:add", args=[p.pk]))
     codes = [client.post(reverse("orders:checkout"), FORM).status_code for _ in range(7)]
@@ -204,3 +213,53 @@ def test_confirm_page_without_pending_checkout_redirects(client):
 def test_mask_email():
     assert otp_service.mask_email("rafi@example.com") == "ra••@example.com"
     assert otp_service.purge_expired() == 0
+
+
+# ---- first-time guests (an email we have never seen) order in one step, with no emailed code --------------------------
+def test_first_time_guest_orders_without_a_code(client):
+    p, resp = start(client, known=False)
+    order = Order.objects.get()
+    assert resp.status_code == 302 and resp["Location"] == reverse("orders:success", args=[order.number])
+    assert not CheckoutOTP.objects.exists()
+    user = User.objects.get(email="guest@example.com")
+    assert order.user == user and not user.has_usable_password() and not user.email_verified
+    assert str(user.pk) == client.session["_auth_user_id"]            # signed in, so the success page opens
+    assert client.get(order.get_absolute_url()).status_code == 200
+    assert user.shipping_addresses.get().is_default
+    p.refresh_from_db()
+    assert p.stock == 38
+
+
+def test_guest_account_checks_out_again_without_a_code(client):
+    start(client, known=False)
+    p = Product.objects.get(art_type="headphones")
+    client.post(reverse("cart:add", args=[p.pk]))
+    page = client.get(reverse("orders:checkout"))
+    assert b"email me a code" not in page.content and b'name="email"' not in page.content
+    data = {k: v for k, v in FORM.items() if k != "email"}
+    assert client.post(reverse("orders:checkout"), data)["Location"].startswith("/orders/NM-")
+    assert Order.objects.count() == 2 and not CheckoutOTP.objects.exists()
+
+
+def test_guest_checkout_page_does_not_mention_a_code(client):
+    p = Product.objects.first()
+    client.post(reverse("cart:add", args=[p.pk]))
+    html = client.get(reverse("orders:checkout")).content
+    assert b"email me a code" not in html and b"6-digit" not in html and b"Place order" in html
+
+
+def test_guest_out_of_stock_creates_no_account(client):
+    p = Product.objects.get(art_type="headphones")
+    client.post(reverse("cart:add", args=[p.pk]))
+    client.post(reverse("cart:add", args=[p.pk]))
+    Product.objects.filter(pk=p.pk).update(stock=1)
+    resp = client.post(reverse("orders:checkout"), FORM)
+    assert resp.status_code == 200 and b"only 1" in resp.content
+    assert not Order.objects.exists() and not User.objects.filter(email="guest@example.com").exists()
+
+
+def test_known_email_still_needs_the_code_so_nobody_can_enter_someone_elses_account(client):
+    owner = User.objects.create_user("guest@example.com", "x-Pass-1234567", email_verified=True)
+    _, resp = start(client, known=False)
+    assert resp["Location"] == reverse("orders:confirm") and not Order.objects.exists()
+    assert "_auth_user_id" not in client.session and owner.orders.count() == 0

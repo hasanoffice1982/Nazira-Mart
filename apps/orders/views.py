@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db import IntegrityError
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -9,7 +10,7 @@ from django.views.generic import DetailView, FormView, ListView
 from apps.cart.services import get_cart
 
 from . import otp as otp_service
-from .checkout import address_data, begin_confirmation, billing_for, save_new_shipping, complete_confirmation, needs_email_confirmation, pending_otp, send_order_confirmation
+from .checkout import address_data, begin_confirmation, billing_for, save_new_shipping, complete_confirmation, email_has_account, needs_email_confirmation, pending_otp, place_guest_order, send_order_confirmation
 from .forms import CheckoutForm, OTPForm, TrackOrderForm
 from apps.core.models import SiteSettings
 from apps.core.tracking import lines_event, order_event
@@ -22,7 +23,7 @@ from .services import OrderError, cancel_by_customer, create_order, lines_from_c
 @method_decorator(ratelimit(key="ip", rate="20/h", method="POST", block=True), name="post")
 @method_decorator(ratelimit(key="post:email", rate="5/h", method="POST", block=True), name="post")
 class CheckoutView(FormView):
-    """Open to guests. Verified customers order directly; everyone else confirms by emailed code first."""
+    """Open to guests. New emails and verified customers order directly; only an email that already has an account confirms by emailed code."""
 
     template_name = "orders/checkout.html"
     form_class = CheckoutForm
@@ -63,8 +64,15 @@ class CheckoutView(FormView):
         try:
             if needs_email_confirmation(user):
                 email = user.email if user.is_authenticated else form.cleaned_data["email"]
-                begin_confirmation(self.request, email, form.cleaned_data)
-                return redirect("orders:confirm")
+                if user.is_authenticated or email_has_account(email):
+                    begin_confirmation(self.request, email, form.cleaned_data)   # a known inbox must prove it is theirs
+                    return redirect("orders:confirm")
+                try:
+                    order = place_guest_order(self.request, email, form.cleaned_data)
+                except IntegrityError:   # the same new email checked out twice at the same moment: fall back to the code
+                    begin_confirmation(self.request, email, form.cleaned_data)
+                    return redirect("orders:confirm")
+                return redirect("orders:success", number=order.number)
             data = address_data(form.cleaned_data)
             order = create_order(user=user, lines=lines_from_cart(cart), data=data, billing=billing_for(user, data), coupon_code=self.request.session.get(COUPON_SESSION_KEY, ""))
         except OrderError as exc:

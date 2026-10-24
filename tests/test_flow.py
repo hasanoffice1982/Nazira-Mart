@@ -61,7 +61,7 @@ def test_cart_respects_stock(client):
 def test_checkout_page_open_to_guests_but_needs_items(client):
     assert client.get(reverse("orders:checkout")).status_code == 302  # empty bag -> shop
     add(client, Product.objects.first())
-    assert b"email me a code" in client.get(reverse("orders:checkout")).content
+    assert b"Place order" in client.get(reverse("orders:checkout")).content
 
 
 def test_order_flow_and_ownership(client, user):
