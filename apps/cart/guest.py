@@ -50,6 +50,11 @@ def track(request, data: dict) -> None:
 def capture_contact(request, name: str = "", email: str = "", phone: str = "") -> bool:
     """Save what the visitor typed at checkout. Invalid emails are ignored; returns False when there is no bag to attach it to."""
     cart = _current(request)
+    if cart is None:   # a bag started before tracking existed (or a lost row): rebuild it from the session bag
+        from .services import get_cart
+
+        track(request, get_cart(request)._raw())
+        cart = _current(request)
     if cart is None or not cart.item_count:
         return False
     fields = {}

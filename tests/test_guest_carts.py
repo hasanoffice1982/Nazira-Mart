@@ -77,6 +77,15 @@ def test_autosave_ignores_a_bad_email_and_a_short_phone_and_an_empty_bag(client,
     assert bag.email == "" and bag.phone == ""
 
 
+def test_autosave_rebuilds_the_row_for_a_bag_that_was_never_tracked(client, product):
+    session = client.session
+    session["cart"] = {f"{product.pk}:0": 3}   # a bag from before tracking existed
+    session.save()
+    client.post(reverse("cart:contact"), {"phone": "01712345678"})
+    bag = GuestCart.objects.get()
+    assert bag.items == [[product.pk, 0, 3]] and bag.item_count == 3 and bag.phone == "01712345678"
+
+
 def test_a_bag_with_contact_details_is_kept_when_the_bag_is_emptied(client, product):
     add(client, product)
     client.post(reverse("cart:contact"), {"phone": "01712345678"})
