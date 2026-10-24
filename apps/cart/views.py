@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -9,6 +10,7 @@ from apps.core.htmx import hx_trigger
 from apps.core.models import SiteSettings
 from apps.core.tracking import product_event
 
+from . import guest
 from .services import get_cart
 
 
@@ -76,3 +78,13 @@ class RemoveFromCartView(CartMutationView):
     def post(self, request, product_id: int):
         get_cart(request).remove(product_id, int(request.POST.get("variant") or 0))
         return self.respond(request)
+
+
+@method_decorator(ratelimit(key="ip", rate="60/h", method="POST", block=True), name="dispatch")
+class CaptureContactView(View):
+    """Checkout page autosave: remembers the name, email and phone a signed-out visitor typed, even if they never place the order."""
+
+    def post(self, request):
+        if not request.user.is_authenticated:
+            guest.capture_contact(request, request.POST.get("name", ""), request.POST.get("email", ""), request.POST.get("phone", ""))
+        return HttpResponse(status=204)

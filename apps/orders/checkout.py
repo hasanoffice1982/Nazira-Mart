@@ -17,6 +17,7 @@ from django.utils.http import urlsafe_base64_encode
 from apps.accounts import addresses as address_book
 from apps.accounts import twofactor
 from apps.accounts.models import PresentAddress, ShippingAddress
+from apps.cart import guest as guest_cart
 from apps.cart.services import get_cart
 from apps.core.models import SiteSettings
 
@@ -115,6 +116,7 @@ def complete_confirmation(request, otp: CheckoutOTP) -> Order:
     otp.consumed_at = timezone.now()
     otp.save(update_fields=["consumed_at"])
 
+    guest_cart.mark_converted(request, order)
     get_cart(request).clear()  # clear the guest cart BEFORE login so it isn't merged back in
     request.session.pop(SESSION_KEY, None)
     request.session.pop(COUPON_SESSION_KEY, None)
@@ -136,6 +138,7 @@ def place_guest_order(request, email: str, cleaned: dict) -> Order:
         order = create_order(user=user, lines=lines_from_cart(get_cart(request)), data=data, billing=data, coupon_code=request.session.get(COUPON_SESSION_KEY, ""))
         save_new_shipping(user, data)   # the first address becomes the default
         transaction.on_commit(lambda: send_order_confirmation(request, order, True))
+    guest_cart.mark_converted(request, order)
     get_cart(request).clear()   # clear the guest cart BEFORE login so it isn't merged back in
     request.session.pop(COUPON_SESSION_KEY, None)
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")

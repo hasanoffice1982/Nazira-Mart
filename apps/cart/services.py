@@ -10,6 +10,7 @@ from apps.catalog.models import Product, ProductVariant
 from apps.catalog.services import card_prefetch
 from apps.core.models import SiteSettings
 
+from . import guest
 from .models import Cart, CartItem
 
 SESSION_KEY = "cart"
@@ -86,6 +87,7 @@ class CartService:
         else:
             self.request.session[SESSION_KEY] = {f"{pid}:{vid}": qty for (pid, vid), qty in data.items()}
             self.request.session.modified = True
+            guest.track(self.request, data)
 
     # --- queries -------------------------------------------------------
     def lines(self) -> list[Line]:
@@ -156,14 +158,14 @@ def get_cart(request) -> CartService:
 
 def merge_session_cart(request, user) -> None:
     """Fold the guest session cart into the user's persistent cart after login."""
-    guest = {_parse_session_key(k): v for k, v in request.session.get(SESSION_KEY, {}).items()}
-    if not guest:
+    guest_bag = {_parse_session_key(k): v for k, v in request.session.get(SESSION_KEY, {}).items()}
+    if not guest_bag:
         return
     with transaction.atomic():
         cart, _ = Cart.objects.get_or_create(user=user)
-        products = {p.pk: p for p in Product.objects.filter(pk__in={pid for pid, _ in guest}, is_active=True)}
-        variants = {v.pk: v for v in ProductVariant.objects.filter(pk__in={vid for _, vid in guest if vid}, is_active=True)}
-        for (pid, vid), qty in guest.items():
+        products = {p.pk: p for p in Product.objects.filter(pk__in={pid for pid, _ in guest_bag}, is_active=True)}
+        variants = {v.pk: v for v in ProductVariant.objects.filter(pk__in={vid for _, vid in guest_bag if vid}, is_active=True)}
+        for (pid, vid), qty in guest_bag.items():
             product, variant = products.get(pid), variants.get(vid) if vid else None
             if product is None or (vid and (variant is None or variant.product_id != pid)):
                 continue
@@ -174,4 +176,5 @@ def merge_session_cart(request, user) -> None:
                 item.save()
             else:
                 item.delete()
+    guest.forget(request)   # before the session key changes at login, so no stale guest row is left
     request.session.pop(SESSION_KEY, None)

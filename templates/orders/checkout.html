@@ -20,7 +20,9 @@
 {% include "components/field.html" with field=form.hp_contact %}
 <div class="pay-box"><b>Payment:</b> Cash on delivery — pay when your order arrives.</div>
 <button class="btn btn-dark btn-full" type="submit">Place order · {{ currency }}{{ payable|floatformat:"-2g" }}</button>
-{% if guest %}<p class="muted center" style="margin-top:12px">Cash on delivery: pay when your order arrives. No code needed.</p>{% endif %}</form>
+{% if guest %}<p class="muted center" style="margin-top:12px">Cash on delivery: pay when your order arrives. No code needed.</p>
+<p class="muted center" style="margin-top:6px;font-size:.85em">If you don't finish, we may contact you about your bag.</p>{% endif %}</form>
+{% if not user.is_authenticated %}{% load static %}<script src="{% static 'js/checkout-capture.js' %}" data-url="{% url 'cart:contact' %}" defer></script>{% endif %}
 <aside class="auth-card summary"><h3>Your bag</h3>
 {% for l in lines %}<div class="sum-line"><span>{{ l.product.name }}{% if l.label %} ({{ l.label }}){% endif %} × {{ l.quantity }}</span><b>{{ currency }}{{ l.total|floatformat:"-2g" }}</b></div>{% endfor %}
 <div class="sum-line"><span>Subtotal</span><b>{{ currency }}{{ subtotal|floatformat:"-2g" }}</b></div>
