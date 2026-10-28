@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.catalog",
+    "apps.blog",
     "apps.wishlist",
     "apps.cart",
     "apps.orders",

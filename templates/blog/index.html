@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load seo %}
+{% block title %}{% if category %}{{ category.name }}{% elif tag %}{{ tag.name }}{% else %}Blog{% endif %} — NarizMart{% endblock %}
+{% block seo %}{% if category %}{% seo_tags title=category.name description=category.description|default:"Buying guides, gift ideas and style tips from NarizMart." crumbs=crumbs_list %}{% elif tag %}{% seo_tags title=tag.name description="Articles tagged "|add:tag.name noindex=True %}{% else %}{% seo_tags title="Blog" description="Buying guides, gift ideas and style tips from NarizMart, with real prices in Bangladesh." noindex=posts.paginator.count|yesno:"False,True" %}{% endif %}{% endblock %}
+{% block content %}
+<section class="container section blog-wrap"><p class="crumbs"><a href="{% url 'catalog:home' %}">Home</a> / {% if category or tag %}<a href="{% url 'blog:index' %}">Blog</a> / {% if category %}{{ category.name }}{% else %}{{ tag.name }}{% endif %}{% else %}Blog{% endif %}</p>
+<h1 class="section-title">{% if category %}{{ category.name }}{% elif tag %}#{{ tag.name }}{% else %}NarizMart Blog{% endif %}</h1>
+{% if category.description %}<p class="muted">{{ category.description }}</p>{% elif not category and not tag %}<p class="muted">Buying guides, gift ideas and style tips, with real prices in Bangladesh.</p>{% endif %}
+{% if categories and not tag %}<nav class="blog-cats" aria-label="Blog categories"><a href="{% url 'blog:index' %}"{% if not category %} class="on"{% endif %}>All</a>{% for c in categories %}<a href="{{ c.get_absolute_url }}"{% if category and category.pk == c.pk %} class="on"{% endif %}>{{ c.name }}</a>{% endfor %}</nav>{% endif %}
+{% if posts %}<div class="blog-grid">{% for post in posts %}{% include "blog/_post_card.html" %}{% endfor %}</div>
+{% if is_paginated %}<nav class="pager" aria-label="Pages">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">‹ Newer</a>{% endif %}<span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Older ›</a>{% endif %}</nav>{% endif %}
+{% else %}<p class="empty muted">No articles yet. Please check back soon, or <a href="{% url 'catalog:shop' %}">browse the shop</a>.</p>{% endif %}</section>
+{% endblock %}

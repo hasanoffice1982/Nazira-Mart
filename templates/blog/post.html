@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load seo images %}
+{% block title %}{{ post.heading }} — NarizMart{% endblock %}
+{% block seo %}{% seo_tags title=post.heading description=post.summary image=seo_image og_type="article" crumbs=crumbs extra=article_ld %}{% endblock %}
+{% block content %}
+<section class="container page-wrap"><article class="page-body post-body"><p class="crumbs"><a href="{% url 'catalog:home' %}">Home</a> / <a href="{% url 'blog:index' %}">Blog</a>{% if post.category %} / <a href="{{ post.category.get_absolute_url }}">{{ post.category.name }}</a>{% endif %}</p>
+<h1>{{ post.title }}</h1>
+<p class="muted post-meta">By {{ post.author_name }} · <time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:"d F Y" }}</time> · {{ post.reading_minutes }} min read</p>
+{% if post.cover_image %}<figure class="post-cover">{% responsive_img post.cover_image alt=post.cover_alt|default:post.title sizes="(max-width: 800px) 100vw, 760px" css="post-cover-img" eager=True %}</figure>{% endif %}
+<div class="post-content">{{ post.body|safe }}</div>
+{% if post.tags.all %}<p class="post-tags">{% for t in post.tags.all %}<a href="{{ t.get_absolute_url }}">#{{ t.name }}</a>{% endfor %}</p>{% endif %}
+</article>
+{% if products %}<div class="post-shop"><h2 class="section-title">Shop these products</h2><div class="product-grid">{% for p in products %}{% include "components/product_card.html" %}{% endfor %}</div></div>{% endif %}
+{% if related_posts %}<div class="post-related"><h2 class="section-title">More to read</h2><div class="blog-grid">{% for post in related_posts %}{% include "blog/_post_card.html" %}{% endfor %}</div></div>{% endif %}
+</section>
+{% endblock %}

@@ -18,6 +18,7 @@ IMAGE_FIELDS = {
     "core.SiteSettings": ("hero_image", "promo_image", "story_image"),
     "core.HeroSlide": ("image",),
     "core.PromoBanner": ("image",),
+    "blog.Post": ("cover_image",),
 }
 
 

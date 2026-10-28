@@ -9,11 +9,11 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def seo_tags(context, title="", description="", image="", og_type="website", product=None, crumbs=None, noindex=False, page_type="WebPage", category=None):
+def seo_tags(context, title="", description="", image="", og_type="website", product=None, crumbs=None, noindex=False, page_type="WebPage", category=None, extra=None):
     """All search/social meta for the page. Call it in `{% block seo %}`; with no arguments it gives the site-wide defaults."""
     return mark_safe(seo_meta.build(
         context["request"], SiteSettings.load(), title=title, description=description, image=image, og_type=og_type, product=product,
-        crumbs=crumbs, noindex=noindex, page_type=page_type, category=category,
+        crumbs=crumbs, noindex=noindex, page_type=page_type, category=category, extra=extra,
     ))
 
 

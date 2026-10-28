@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
 
+from apps.blog.models import Post
 from apps.catalog.models import Category, Product
 
 from .models import Page
@@ -60,6 +61,16 @@ class PageSitemap(Sitemap):
         return obj.updated_at
 
 
+class PostSitemap(Sitemap):
+    changefreq, priority = "weekly", 0.6
+
+    def items(self):
+        return Post.objects.published()
+
+    def lastmod(self, obj):
+        return obj.updated_at
+
+
 class CollectionSitemap(Sitemap):
     changefreq, priority = "daily", 0.6
 
@@ -70,7 +81,7 @@ class CollectionSitemap(Sitemap):
         return reverse("catalog:shop") + f"?collection={item}"
 
 
-SITEMAPS = [StaticSitemap(), CategorySitemap(), CollectionSitemap(), ProductSitemap(), PageSitemap()]
+SITEMAPS = [StaticSitemap(), CategorySitemap(), CollectionSitemap(), ProductSitemap(), PageSitemap(), PostSitemap()]
 
 
 @cache_page(60 * 15)
