@@ -244,3 +244,24 @@ def test_product_search_returns_jpeg_photos_for_chat_images(client, shop, settin
 
     # a product without photos still answers, with an empty list
     assert client.get("/api/chat/products/?q=frock", **H).json()["products"][0]["photos"] == []
+
+
+@pytest.mark.django_db
+def test_send_test_order_command_emails_staff(shop, settings, django_capture_on_commit_callbacks):
+    from django.contrib.auth import get_user_model
+
+    get_user_model().objects.create_superuser("boss@example.com", "pw-12345-xyz")
+    settings.ORDER_NOTIFY_EMAILS = ["staff@example.com"]
+    with django_capture_on_commit_callbacks(execute=True):
+        call_command("send_test_order", keep=True)
+    assert len(mail.outbox) == 1 and mail.outbox[0].subject.startswith("[NEW ORDER]") and Order.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_send_test_order_command_removes_the_order_and_restores_stock(shop):
+    from django.contrib.auth import get_user_model
+
+    get_user_model().objects.create_superuser("boss@example.com", "pw-12345-xyz")
+    before = dict(Product.objects.values_list("pk", "stock"))
+    call_command("send_test_order")
+    assert not Order.objects.exists() and dict(Product.objects.values_list("pk", "stock")) == before
